@@ -1,0 +1,115 @@
+{
+  "_ayuda": "Editá esto para actualizar. infra_source: Excel base con los servicios y %. pipeline: nombre exacto de la fila en esa base. excel/geo: archivos en data_src/. merge_ab: une lotes 28A/28B al polígono 28. manzana_rules: cómo traducir la manzana del Excel al plano. green_manzana: regex de manzanas verdes. lote_fallback: empareja por número base cuando es 1a1. link_sitio/link_pipeline: URLs externas que se muestran como botones en el header del emprendimiento (dejá vacío para ocultar).",
+  "infra_source": "Base_emprendimientos.xlsx",
+  "emprendimientos": [
+    {
+      "codigo": "N73",
+      "nombre": "Nuevo Maipú",
+      "nombre_full": "N73 Nuevo Maipú",
+      "ubicacion": "Maipú",
+      "ciudad": "Mendoza",
+      "provincia": "Mendoza",
+      "estado_general": "En ejecución",
+      "excel": "06_2026_Natania_73.xlsx",
+      "geo": "N73_geo.json",
+      "merge_ab": false,
+      "pipeline": "N73 - Nuevo Maipú",
+      "link_sitio": "",
+      "link_pipeline": ""
+    },
+    {
+      "codigo": "N62",
+      "nombre": "Carrodilla",
+      "nombre_full": "N62 Carrodilla",
+      "ubicacion": "Luján de Cuyo",
+      "ciudad": "Mendoza",
+      "provincia": "Mendoza",
+      "estado_general": "En ejecución",
+      "excel": "06_2026_Natania_62.xlsx",
+      "geo": "N62_geo.json",
+      "merge_ab": true,
+      "pipeline": "N62 - Carrodilla Sector Sur - Etapa I",
+      "link_sitio": "",
+      "link_pipeline": "",
+      "georef": [
+        {
+          "dxf": [
+            2513639.87,
+            6350233.46
+          ],
+          "ll": [
+            -32.990435,
+            -68.855699
+          ]
+        },
+        {
+          "dxf": [
+            2513623.55,
+            6350698.27
+          ],
+          "ll": [
+            -32.986515,
+            -68.854314
+          ]
+        }
+      ]
+    },
+    {
+      "codigo": "N65",
+      "nombre": "Meglioli",
+      "nombre_full": "N65 Meglioli",
+      "ubicacion": "San Juan",
+      "ciudad": "San Juan",
+      "provincia": "San Juan",
+      "estado_general": "En ejecución",
+      "excel": "06_2026_N65.xlsx",
+      "geo": "N65_geo.json",
+      "merge_ab": false,
+      "pipeline": "N65 - Meglioli",
+      "manzana_rules": [
+        {
+          "match": "microbarrio",
+          "prefix": "MB"
+        },
+        {
+          "match": "perimetral",
+          "prefix": "P"
+        },
+        {
+          "match": "mza",
+          "prefix": "M"
+        }
+      ],
+      "green_manzana": "^EV",
+      "link_sitio": "",
+      "link_pipeline": ""
+    },
+    {
+      "codigo": "N74",
+      "nombre": "Santa Lucía II",
+      "nombre_full": "N74 Santa Lucía II",
+      "ubicacion": "Santa Lucía",
+      "ciudad": "San Juan",
+      "provincia": "San Juan",
+      "estado_general": "En ejecución",
+      "excel": "06_2026_N74.xlsx",
+      "geo": "N74_geo.json",
+      "merge_ab": false,
+      "pipeline": "N74 - Santa Lucía II",
+      "manzana_rules": [
+        {
+          "match": "mza",
+          "map": {
+            "1": "A",
+            "2": "B",
+            "3": "C",
+            "4": "D"
+          }
+        }
+      ],
+      "lote_fallback": true,
+      "link_sitio": "",
+      "link_pipeline": ""
+    }
+  ]
+}

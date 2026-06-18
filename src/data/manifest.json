@@ -1,0 +1,115 @@
+[
+  {
+    "codigo": "N73",
+    "nombre": "Nuevo Maipú",
+    "nombre_full": "N73 Nuevo Maipú",
+    "ubicacion": "Maipú",
+    "ciudad": "Mendoza",
+    "provincia": "Mendoza",
+    "estado_general": "En ejecución",
+    "link_sitio": "",
+    "link_pipeline": "",
+    "infra": {
+      "gas": 100,
+      "agua": 100,
+      "cloacas": 100,
+      "electricidad": 100,
+      "red_vial": 100
+    },
+    "kpis": {
+      "total": 181,
+      "disponibles": 65,
+      "reservados": 24,
+      "adjudicados": 23,
+      "entregados": 64,
+      "escriturados": 4,
+      "no_disponible": 1,
+      "pct_comercializado": 50.3
+    }
+  },
+  {
+    "codigo": "N62",
+    "nombre": "Carrodilla",
+    "nombre_full": "N62 Carrodilla",
+    "ubicacion": "Luján de Cuyo",
+    "ciudad": "Mendoza",
+    "provincia": "Mendoza",
+    "estado_general": "En ejecución",
+    "link_sitio": "",
+    "link_pipeline": "",
+    "infra": {
+      "gas": 100,
+      "agua": 100,
+      "cloacas": 100,
+      "electricidad": 90,
+      "red_vial": 100
+    },
+    "kpis": {
+      "total": 204,
+      "disponibles": 15,
+      "reservados": 30,
+      "adjudicados": 106,
+      "entregados": 0,
+      "escriturados": 0,
+      "no_disponible": 11,
+      "pct_comercializado": 52
+    }
+  },
+  {
+    "codigo": "N65",
+    "nombre": "Meglioli",
+    "nombre_full": "N65 Meglioli",
+    "ubicacion": "San Juan",
+    "ciudad": "San Juan",
+    "provincia": "San Juan",
+    "estado_general": "En ejecución",
+    "link_sitio": "",
+    "link_pipeline": "",
+    "infra": {
+      "gas": 100,
+      "agua": 100,
+      "cloacas": 100,
+      "electricidad": 100,
+      "espacios_verdes": 0,
+      "red_vial": 100
+    },
+    "kpis": {
+      "total": 348,
+      "disponibles": 7,
+      "reservados": 5,
+      "adjudicados": 46,
+      "entregados": 210,
+      "escriturados": 42,
+      "no_disponible": 0,
+      "pct_comercializado": 85.6
+    }
+  },
+  {
+    "codigo": "N74",
+    "nombre": "Santa Lucía II",
+    "nombre_full": "N74 Santa Lucía II",
+    "ubicacion": "Santa Lucía",
+    "ciudad": "San Juan",
+    "provincia": "San Juan",
+    "estado_general": "En ejecución",
+    "link_sitio": "",
+    "link_pipeline": "",
+    "infra": {
+      "gas": 100,
+      "agua": 100,
+      "cloacas": 100,
+      "electricidad": 100,
+      "red_vial": 100
+    },
+    "kpis": {
+      "total": 69,
+      "disponibles": 10,
+      "reservados": 10,
+      "adjudicados": 47,
+      "entregados": 0,
+      "escriturados": 0,
+      "no_disponible": 0,
+      "pct_comercializado": 68.1
+    }
+  }
+]
