@@ -104,21 +104,13 @@ export default function Dashboard() {
                         </div>
 
                         {pctInfra != null && (
-                          <div className="emp-infra-section">
-                            <div className="emp-progress-label" style={{ marginBottom: 6 }}>
+                          <div className="emp-progress" style={{ marginTop: 4 }}>
+                            <div className="emp-progress-label">
                               <span>Infraestructura</span>
-                              <strong style={{ color: pctInfra === 100 ? '#16a34a' : pctInfra > 50 ? '#f59e0b' : '#64748b' }}>{pctInfra}%</strong>
+                              <strong style={{ color: pctInfra === 100 ? '#16a34a' : pctInfra > 50 ? '#FB7520' : '#64748b' }}>{pctInfra}%</strong>
                             </div>
-                            <div className="infra-mini-grid">
-                              {infraVals(emp).filter(i => i.pct > 0).map(item => (
-                                <div key={item.tipo} className="infra-mini-item" title={`${item.name}: ${item.pct ?? 0}%`}>
-                                  <div className="infra-mini-icon" style={{ color: item.color }}>{item.short}</div>
-                                  <div className="infra-mini-bar">
-                                    <div className="infra-mini-fill" style={{ width: `${item.pct ?? 0}%`, background: item.color }} />
-                                  </div>
-                                  <div className="infra-mini-pct">{item.pct ?? 0}%</div>
-                                </div>
-                              ))}
+                            <div className="emp-progress-bar">
+                              <div className="emp-progress-fill" style={{ width: `${pctInfra}%`, background: pctInfra === 100 ? '#16a34a' : '#FB7520' }} />
                             </div>
                           </div>
                         )}

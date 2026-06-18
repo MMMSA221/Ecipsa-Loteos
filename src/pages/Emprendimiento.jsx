@@ -284,6 +284,9 @@ export default function Emprendimiento() {
   if (htmlFile) {
     const base = import.meta.env.BASE_URL || '/'
     const src = `${base}tableros/${htmlFile}`
+    const infra = mEntry?.infra || {}
+    const infraItems = INFRA_ITEMS.filter(i => infra[i.tipo] != null)
+    const infraAvg = infraItems.length ? Math.round(infraItems.reduce((s, i) => s + (infra[i.tipo] || 0), 0) / infraItems.length) : null
     return (
       <div className="tablero" style={{ display: 'flex', flexDirection: 'column' }}>
         <header className="t-header" style={{ flexShrink: 0 }}>
@@ -293,9 +296,26 @@ export default function Emprendimiento() {
             <div className="t-title-main">{emp?.nombre_full || emp?.nombre || codigo}</div>
             <div className="t-title-sub">{[emp?.ubicacion, emp?.ciudad, emp?.provincia].filter(Boolean).join(', ')}</div>
           </div>
+          {infraAvg != null && (
+            <div className="t-infra-badge" title={infraItems.map(i => `${i.name}: ${infra[i.tipo]}%`).join('\n')}>
+              <span style={{ color: infraAvg === 100 ? '#16a34a' : '#FB7520', fontWeight: 700 }}>{infraAvg}%</span>
+              <span style={{ fontSize: 10, opacity: 0.7 }}>Infra</span>
+            </div>
+          )}
           <div className="t-spacer" />
           <button className="t-logout" onClick={logout}>Salir</button>
         </header>
+        {infraItems.length > 0 && (
+          <div className="t-infra-ribbon">
+            {infraItems.map(i => (
+              <div key={i.tipo} className="t-infra-ribbon-item">
+                <InfraIcon tipo={i.tipo} color={i.color} size={14} />
+                <span className="t-infra-ribbon-name">{i.short}</span>
+                <span className="t-infra-ribbon-pct" style={{ color: infra[i.tipo] === 100 ? '#16a34a' : i.color }}>{infra[i.tipo]}%</span>
+              </div>
+            ))}
+          </div>
+        )}
         <iframe src={src} style={{ flex: 1, border: 'none', width: '100%', minHeight: 0 }} title={`Tablero ${codigo}`} />
       </div>
     )
