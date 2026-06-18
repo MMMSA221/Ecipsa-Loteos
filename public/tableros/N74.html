@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>N74 · Santa Lucía II — Tablero de Stock y Obra</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#363b48; --surface:#3f4453; --surface2:#474d5f; --surface3:#50566a;
+  --border:#585f75; --border2:#626a82; --accent:#5a9cf8;
+  --text:#eaecf4; --text2:#b8bfd4; --text3:#8b93ab;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+header{padding:8px 18px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px;flex-shrink:0;}
+.logo{background:linear-gradient(135deg,#4f8ef7,#9b8fef);color:#fff;font-family:'DM Mono',monospace;font-size:11px;font-weight:500;padding:4px 10px;border-radius:6px;letter-spacing:.05em;flex-shrink:0;}
+.header-titles{display:flex;flex-direction:column;gap:1px;}
+.header-main{font-size:13px;font-weight:600;color:var(--text);line-height:1.2;}
+.header-sub{font-size:10px;font-weight:400;color:var(--text3);letter-spacing:.03em;}
+.kpi-bar{display:flex;align-items:stretch;background:transparent;border-bottom:1px solid var(--border);flex-shrink:0;}
+.kpi-bar-spacer{flex:1;}
+.kpi-group{display:flex;gap:1px;background:var(--border);}
+.kpi{padding:9px 20px;background:var(--surface);display:flex;flex-direction:column;gap:2px;min-width:160px;}
+.kpi-label{font-size:9px;text-transform:uppercase;letter-spacing:.09em;color:var(--text3);font-weight:600;}
+.kpi-top{display:flex;align-items:baseline;gap:8px;}
+.kpi-q{font-family:'DM Mono',monospace;font-size:21px;font-weight:500;line-height:1;}
+.kpi-usd{font-family:'DM Mono',monospace;font-size:11px;color:var(--text2);}
+.kpi-sub{font-size:9px;color:var(--text3);}
+.main{display:flex;flex:1;overflow:hidden;}
+.sidebar{width:210px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;}
+.sb-scroll{overflow-y:auto;padding:13px 11px;flex:1;}
+.sec-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.09em;color:var(--text3);font-weight:600;margin-bottom:6px;margin-top:13px;}
+.sec-lbl:first-child{margin-top:0;}
+.sec-lbl span{font-weight:400;text-transform:none;letter-spacing:0;font-size:8px;}
+.mode-tabs{display:flex;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:3px;gap:2px;margin-bottom:12px;}
+.mode-tab{flex:1;padding:5px 3px;text-align:center;font-size:9.5px;font-weight:500;color:var(--text3);cursor:pointer;border-radius:5px;transition:all .15s;line-height:1.3;border:1px solid transparent;}
+.mode-tab.active{background:var(--surface3);color:var(--text);border-color:var(--border2);}
+.legend{display:flex;flex-direction:column;gap:3px;}
+.leg-item{display:flex;align-items:center;gap:7px;padding:4px 6px;border-radius:5px;cursor:pointer;font-size:11px;color:var(--text2);transition:background .1s;border:1px solid transparent;user-select:none;}
+.leg-item:hover{background:var(--surface2);}
+.leg-item.on{background:var(--surface3);border-color:var(--border2);color:var(--text);}
+.leg-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0;}
+.leg-count{margin-left:auto;font-family:'DM Mono',monospace;font-size:10px;color:var(--text3);}
+.flt{margin-bottom:7px;}
+.flt-lbl{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px;}
+select.flt-drop{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 8px;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer;outline:none;transition:border-color .15s;appearance:none;}
+select.flt-drop:hover,select.flt-drop:focus{border-color:var(--accent);}
+select.flt-drop option{background:var(--surface2);}
+select.flt-multi{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer;outline:none;transition:border-color .15s;}
+select.flt-multi option{padding:4px 8px;background:var(--surface2);}
+select.flt-multi:hover,select.flt-multi:focus{border-color:var(--accent);}
+select.flt-multi option:checked{background:var(--surface3);}
+.reset-btn{width:100%;margin-top:6px;padding:7px;background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer;transition:all .15s;}
+.reset-btn:hover{border-color:var(--accent);color:var(--accent);}
+.map-wrap{flex:1;position:relative;overflow:hidden;background:#272b35;cursor:grab;}
+.map-wrap:active{cursor:grabbing;}
+#map-svg{position:absolute;top:0;left:0;transform-origin:0 0;user-select:none;}
+.lot-poly{stroke:#272b35;stroke-width:0.5;cursor:pointer;}
+.lot-poly.dimmed{opacity:.07!important;pointer-events:none;}
+.lot-poly.sel{stroke:#fff!important;stroke-width:1.8!important;filter:brightness(1.3);}
+.lot-poly:not(.dimmed):not(.sel):hover{filter:brightness(1.4);stroke:rgba(255,255,255,.6)!important;stroke-width:0.9!important;}
+.mzn-poly{fill:none;stroke:#626a82;stroke-width:1.2;pointer-events:none;}
+.mzn-lbl{font-family:'DM Sans',sans-serif;font-size:9px;font-weight:600;fill:rgba(255,255,255,.13);pointer-events:none;text-anchor:middle;dominant-baseline:middle;}
+.lot-lbl{font-family:'DM Mono',monospace;font-size:3.2px;fill:rgba(255,255,255,.45);pointer-events:none;text-anchor:middle;dominant-baseline:middle;}
+.zoom-ctrls{position:absolute;bottom:15px;right:15px;display:flex;flex-direction:column;gap:4px;z-index:10;}
+.zoom-btn{width:34px;height:34px;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:7px;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;}
+.zoom-btn:hover{background:var(--surface2);}
+.fit-btn{position:absolute;bottom:15px;right:57px;height:34px;padding:0 11px;background:var(--surface);border:1px solid var(--border);color:var(--text2);border-radius:7px;font-size:10px;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;z-index:10;transition:background .15s;white-space:nowrap;}
+.fit-btn:hover{background:var(--surface2);}
+.compass{position:absolute;top:14px;right:14px;width:44px;height:44px;z-index:10;pointer-events:none;}
+.expand-btn{position:absolute;bottom:15px;right:100px;height:34px;padding:0 11px;background:var(--surface);border:1px solid var(--border);color:var(--text2);border-radius:7px;font-size:10px;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;z-index:10;transition:background .15s;white-space:nowrap;gap:5px;pointer-events:all;}
+.expand-btn:hover{background:var(--surface2);color:var(--text);}
+body.map-expanded .sidebar,body.map-expanded .detail,body.map-expanded header,body.map-expanded .kpi-bar{display:none!important;}
+body.map-expanded .main{position:fixed;inset:0;z-index:100;}
+body.map-expanded .map-wrap{width:100vw!important;height:100vh!important;}
+body.map-expanded .expand-lbl::before{content:'✕  Cerrar';}
+.expand-lbl::before{content:'⛶  Ampliar mapa';}
+.detail{width:0;min-width:0;overflow:hidden;background:var(--surface);border-left:0px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;transition:width .22s cubic-bezier(.4,0,.2,1),border-left-width .22s;}
+.detail.open{width:268px;border-left-width:1px;overflow:visible;}
+.det-hdr,.det-body{min-width:268px;}
+.det-hdr{padding:13px 15px 11px;border-bottom:1px solid var(--border);}
+.det-pre{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:3px;}
+.det-name{font-size:13px;font-weight:500;color:var(--text);line-height:1.3;}
+.det-badge{display:inline-flex;align-items:center;gap:5px;margin-top:7px;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:500;}
+.det-body{padding:11px 15px;overflow-y:auto;flex:1;}
+.det-grp{margin-bottom:13px;}
+.det-grp-ttl{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:6px;padding-bottom:3px;border-bottom:1px solid var(--border);}
+.det-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px;gap:8px;}
+.det-k{font-size:11px;color:var(--text2);flex-shrink:0;}
+.det-v{font-size:11px;color:var(--text);text-align:right;font-weight:500;}
+.det-v.mono{font-family:'DM Mono',monospace;color:var(--accent);font-size:12px;}
+.det-empty{padding:40px 15px;text-align:center;color:var(--text3);font-size:12px;line-height:1.8;}
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">N74</div>
+  <div class="header-titles">
+    <div class="header-main">N74 Santa Lucía II · Tablero de Stock y Obra</div>
+    <div class="header-sub">San Juan Capital, Argentina · Junio 2026</div>
+  </div>
+</header>
+
+<div class="kpi-bar">
+  <div class="kpi-bar-spacer"></div>
+  <div class="kpi-group">
+    <div class="kpi">
+      <div class="kpi-label">Total Stock</div>
+      <div class="kpi-top"><div class="kpi-q" id="kpi-total-q" style="color:#5a9cf8">—</div><div class="kpi-usd" id="kpi-total-usd">USD —</div></div>
+      <div class="kpi-sub">unidades visibles</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Disponibles</div>
+      <div class="kpi-top"><div class="kpi-q" id="kpi-disp-q" style="color:#22d3a0">—</div><div class="kpi-usd" id="kpi-disp-usd">USD —</div></div>
+      <div class="kpi-sub">para la venta</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Adjudicados</div>
+      <div class="kpi-top"><div class="kpi-q" id="kpi-adj-q" style="color:#f5a623">—</div><div class="kpi-usd" id="kpi-adj-usd">USD —</div></div>
+      <div class="kpi-sub">adj. + reservados</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Entregados</div>
+      <div class="kpi-top"><div class="kpi-q" id="kpi-ent-q" style="color:#7dd3fc">—</div><div class="kpi-usd" id="kpi-ent-usd">USD —</div></div>
+      <div class="kpi-sub">entregados + escrit.</div>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+<div class="sidebar">
+<div class="sb-scroll">
+  <div class="sec-lbl">Vista de color</div>
+  <div class="mode-tabs">
+    <div class="mode-tab active" data-mode="estado">Por Estado</div>
+    <div class="mode-tab" data-mode="tipo">Por Tipo Producto</div>
+    <div class="mode-tab" data-mode="estilo">Por Estilo Casa</div>
+  </div>
+  <div class="sec-lbl">Leyenda <span>(Ctrl+clic = múltiple)</span></div>
+  <div class="legend" id="legend"></div>
+  <div class="sec-lbl">Tipo de Inmueble <span>(Ctrl+clic)</span></div>
+  <select id="f-tipo" class="flt-multi" multiple size="3">
+    <option value="Casa">Casa</option>
+    <option value="Casa Futura">Casa Futura</option>
+    <option value="Lote">Lote</option>
+  </select>
+  <div class="sec-lbl">Filtros</div>
+  <div class="flt">
+    <div class="flt-lbl">Negocio Comercial</div>
+    <select id="f-negocio" class="flt-drop"><option value="">Todos</option></select>
+  </div>
+  <div class="flt">
+    <div class="flt-lbl">Etapa</div>
+    <select id="f-etapa" class="flt-drop"><option value="">Todas</option></select>
+  </div>
+  <div class="flt">
+    <div class="flt-lbl">Avance de Obra</div>
+    <select id="f-avance" class="flt-drop"><option value="">Todos</option></select>
+  </div>
+  <div class="flt">
+    <div class="flt-lbl">Manzana</div>
+    <select id="f-manzana" class="flt-drop">
+      <option value="">Todas</option>
+      <option>A</option><option>B</option><option>C</option><option>D</option>
+    </select>
+  </div>
+  <button class="reset-btn" id="reset-btn">↺ Limpiar todo</button>
+</div>
+</div>
+
+<div class="map-wrap" id="map-wrap">
+  <svg id="map-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+  <svg class="compass" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="22" cy="22" r="20" fill="rgba(40,44,56,0.75)" stroke="#585f75" stroke-width="1"/>
+    <polygon points="22,5 18,22 22,19 26,22" fill="#e05555"/>
+    <polygon points="22,39 26,22 22,25 18,22" fill="#8b93ab"/>
+    <circle cx="22" cy="22" r="2.5" fill="#eaecf4"/>
+    <text x="22" y="4" text-anchor="middle" dominant-baseline="auto" font-family="DM Sans,sans-serif" font-size="7" font-weight="700" fill="#e05555">N</text>
+  </svg>
+  <div class="zoom-ctrls">
+    <button class="zoom-btn" id="zin">+</button>
+    <button class="zoom-btn" id="zout">−</button>
+  </div>
+  <button class="fit-btn" id="fit-btn">⊡ Ajustar</button>
+  <button class="expand-btn" id="expand-btn"><span class="expand-lbl"></span></button>
+</div>
+
+<div class="detail" id="detail-panel">
+  <div class="det-hdr">
+    <div class="det-pre">Producto seleccionado</div>
+    <div class="det-name" id="det-name">—</div>
+    <div class="det-badge" id="det-badge" style="display:none"></div>
+  </div>
+  <div class="det-body" id="det-body">
+    <div class="det-empty">Hacé clic en un lote<br>para ver sus detalles</div>
+  </div>
+</div>
+</div>
+
+<script>
+const RAW_DATA = {"lots":[{"manzana":"A","lote":"1b","pts":[[2547949.655099,6511051.63139],[2547961.926225,6511047.338578],[2547954.950193,6511027.848837],[2547942.710599,6511032.229742],[2547949.655099,6511051.63139]],"cx":2547952.315155,"cy":6511039.7605,"nombre":"Lote 1b - Mza 1- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"268.5","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"2029-03-01","etapa":"Santa Lucia II - Etapa III","dormitorios":"2","costo":"79756.07"},{"manzana":"A","lote":"1c","pts":[[2547961.926225,6511047.338578],[2547974.197351,6511043.045765],[2547967.189752,6511023.467832],[2547954.950152,6511027.848852],[2547961.926225,6511047.338578]],"cx":2547964.570479,"cy":6511035.42362,"nombre":"Lote 1c - Mza 1- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"269.72","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"2029-03-01","etapa":"Santa Lucia II - Etapa III","dormitorios":"2","costo":"79843.68"},{"manzana":"A","lote":"1a","pts":[[2547949.655102,6511051.6314],[2547942.710652,6511032.229891],[2547933.796203,6511035.438817],[2547938.847088,6511055.407586]],"cx":2547941.350689,"cy":6511043.985811,"nombre":"Lote 1a - Mza 1- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"246.09","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"2029-03-01","etapa":"Santa Lucia II - Etapa III","dormitorios":"2","costo":"78140.14"},{"manzana":"A","lote":"2a","pts":[[2547986.930968,6511038.59105],[2547979.890666,6511018.921749],[2547967.18977,6511023.467883],[2547974.197351,6511043.045765]],"cx":2547977.057126,"cy":6511031.004865,"nombre":"Lote 2a - Mza 1- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"281.1","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"2029-03-01","etapa":"Santa Lucia II - Etapa III","dormitorios":"2","costo":"80725.98"},{"manzana":"A","lote":"2b","pts":[[2547999.579851,6511034.166664],[2547992.506827,6511014.405945],[2547979.890294,6511018.920957],[2547986.930968,6511038.59105]],"cx":2547989.731819,"cy":6511026.519432,"nombre":"Lote 2b - Mza 1- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"280.59","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"2029-03-01","etapa":"Santa Lucia II - Etapa III","dormitorios":"2","costo":"80677.3"},{"manzana":"A","lote":"2c","pts":[[2548011.323921,6511030.057655],[2548004.22087,6511010.213043],[2547992.506827,6511014.405945],[2547999.579851,6511034.166664]],"cx":2548001.912008,"cy":6511022.209361,"nombre":"Lote 2c - Mza 1- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"261.75","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"2029-03-01","etapa":"Santa Lucia II - Etapa III","dormitorios":"2","costo":"79197.22"},{"manzana":"A","lote":"3a","pts":[[2548011.32395,6511030.057645],[2548022.993705,6511025.974901],[2548015.861354,6511006.046535],[2548004.22087,6511010.213043]],"cx":2548013.604018,"cy":6511018.071498,"nombre":"Lote 3a - Mza 1- Natania 74: Santa Lucia II","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"261.13","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"2029-03-01","etapa":"Santa Lucia II - Etapa III","dormitorios":"2","costo":"79141.85"},{"manzana":"A","lote":"3b","pts":[[2548022.993705,6511025.974901],[2548015.861354,6511006.046535],[2548027.501816,6511001.880036],[2548034.668172,6511021.890815]],"cx":2548025.260544,"cy":6511013.947199,"nombre":"Lote 3b - Mza 1- Natania 74: Santa Lucia II","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"262.23","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"2029-03-01","etapa":"Santa Lucia II - Etapa III","dormitorios":"2","costo":"79220.84"},{"manzana":"A","lote":"3c","pts":[[2548027.501816,6511001.880036],[2548038.996334,6510997.765773],[2548046.188703,6511017.859973],[2548034.668193,6511021.890807]],"cx":2548036.842514,"cy":6511009.847256,"nombre":"Lote 3c - Mza 1- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"260.05","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"2029-03-01","etapa":"Santa Lucia II - Etapa III","dormitorios":"2","costo":"79043.2"},{"manzana":"A","lote":"4a","pts":[[2548046.188754,6511017.859958],[2548057.713116,6511013.828997],[2548050.490849,6510993.651323],[2548038.996318,6510997.765625]],"cx":2548048.351229,"cy":6511005.775071,"nombre":"Lote 4a - Mza 1- Natania 74: Santa Lucia II","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"261.1","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"2029-03-01","etapa":"Santa Lucia II - Etapa III","dormitorios":"2","costo":"79118.6"},{"manzana":"A","lote":"4b","pts":[[2548069.189943,6511009.814055],[2548061.937218,6510989.554285],[2548050.490849,6510993.651323],[2548057.712727,6511013.827912]],"cx":2548059.83668,"cy":6511001.710638,"nombre":"Lote 4b - Mza 1- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Americana","m2_terreno":"261.09","m2_construido":"52.0","avance_obra":"Pozo","fecha_entrega":"2029-03-01","etapa":"Santa Lucia II - Etapa III","dormitorios":"2","costo":"67440.37"},{"manzana":"A","lote":"4c","pts":[[2548061.937217,6510989.554285],[2548069.189944,6511009.814054],[2548080.618152,6511005.81612],[2548073.337024,6510985.473996]],"cx":2548071.274376,"cy":6510997.663112,"nombre":"Lote 4c - Mza 1- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Americana","m2_terreno":"261.07","m2_construido":"52.0","avance_obra":"Pozo","fecha_entrega":"2029-03-01","etapa":"Santa Lucia II - Etapa III","dormitorios":"2","costo":"72662.12"},{"manzana":"A","lote":"5a","pts":[[2548080.618152,6511005.81612],[2548073.337024,6510985.473996],[2548084.688659,6510981.41095],[2548091.998827,6511001.834205]],"cx":2548082.664436,"cy":6510993.632483,"nombre":"Lote 5a - Mza 1- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Americana","m2_terreno":"261.02","m2_construido":"52.0","avance_obra":"En Construccion","fecha_entrega":"2026-11-01","etapa":"Santa Lucia II - Etapa I - B","dormitorios":"2","costo":"63241.56"},{"manzana":"A","lote":"5b","pts":[[2548091.998827,6511001.834205],[2548103.332557,6510997.86993],[2548095.993112,6510977.364453],[2548084.688659,6510981.41095]],"cx":2548094.007069,"cy":6510989.618524,"nombre":"Lote 5b - Mza 1- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Americana","m2_terreno":"260.98","m2_construido":"52.0","avance_obra":"En Construccion","fecha_entrega":"2026-11-01","etapa":"Santa Lucia II - Etapa I - B","dormitorios":"2","costo":"63232.06"},{"manzana":"A","lote":"5c","pts":[[2548103.332557,6510997.86993],[2548114.631128,6510993.917662],[2548107.263244,6510973.330893],[2548095.993112,6510977.364453]],"cx":2548105.30869,"cy":6510985.619333,"nombre":"Lote 5c - Mza 1- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Americana","m2_terreno":"261.22","m2_construido":"52.0","avance_obra":"En Construccion","fecha_entrega":"2026-11-01","etapa":"Santa Lucia II - Etapa I - B","dormitorios":"2","costo":"63243.87"},{"manzana":"A","lote":"6a","pts":[[2548114.631849,6510993.91741],[2548127.942714,6510989.260865],[2548120.688876,6510968.525562],[2548107.263244,6510973.330893]],"cx":2548117.630073,"cy":6510981.237686,"nombre":"Lote 6a - Mza 1- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Americana","m2_terreno":"310.78","m2_construido":"52.0","avance_obra":"Pozo","fecha_entrega":"2027-12-01","etapa":"Santa Lucia II - Etapa II","dormitorios":"2","costo":"76497.02"},{"manzana":"A","lote":"6b","pts":[[2548127.942714,6510989.260865],[2548142.969429,6510984.004064],[2548135.609916,6510963.184698],[2548120.688876,6510968.525562]],"cx":2548131.811973,"cy":6510976.249329,"nombre":"Lote 6b - Mza 1- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Americana","m2_terreno":"349.0","m2_construido":"62.0","avance_obra":"Pozo","fecha_entrega":"2027-12-01","etapa":"Santa Lucia II - Etapa II","dormitorios":"3","costo":"91143.44"},{"manzana":"A","lote":"7c","pts":[[2548128.109945,6510941.968793],[2548144.910507,6510935.987341],[2548149.92859,6510950.015867],[2548133.075797,6510956.015915]],"cx":2548139.007501,"cy":6510946.00061,"nombre":"Lote 7c - Mza 1- Microbarrio 1 Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"266.11","m2_construido":"68.0","avance_obra":"Pozo","fecha_entrega":"2029-03-01","etapa":"Santa Lucia II - Etapa III","dormitorios":"3","costo":"91098.21"},{"manzana":"A","lote":"7b","pts":[[2548133.075797,6510956.015915],[2548138.041034,6510970.063255],[2548154.946672,6510964.044393],[2548149.94949,6510950.008426]],"cx":2548144.004033,"cy":6510960.03521,"nombre":"Lote 7b - Mza 1- Microbarrio 1 Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"266.94","m2_construido":"68.0","avance_obra":"Pozo","fecha_entrega":"2029-03-01","etapa":"Santa Lucia II - Etapa III","dormitorios":"3","costo":"91157.82"},{"manzana":"A","lote":"7a","pts":[[2548154.946672,6510964.044393],[2548159.960197,6510978.060178],[2548142.969429,6510984.004064],[2548138.041034,6510970.063255]],"cx":2548148.99003,"cy":6510974.043216,"nombre":"Lote 7a - Mza 1- Microbarrio 1 Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"267.12","m2_construido":"68.0","avance_obra":"Pozo","fecha_entrega":"2029-03-01","etapa":"Santa Lucia II - Etapa III","dormitorios":"3","costo":"91170.74"},{"manzana":"A","lote":"7g","pts":[[2548152.444102,6510933.295695],[2548156.330854,6510944.161478],[2548177.069212,6510936.787858],[2548172.556486,6510926.144643]],"cx":2548164.610889,"cy":6510935.124884,"nombre":"Lote 7g - Mza 1- Microbarrio 1 Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"250.17","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"2029-03-01","etapa":"Santa Lucia II - Etapa III","dormitorios":"2","costo":"82036.18"},{"manzana":"A","lote":"7f","pts":[[2548156.330854,6510944.161478],[2548160.140254,6510954.811019],[2548181.49396,6510947.223576],[2548177.069212,6510936.787858]],"cx":2548168.769289,"cy":6510945.771346,"nombre":"Lote 7f - Mza 1- Microbarrio 1 Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"252.68","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"2029-03-01","etapa":"Santa Lucia II - Etapa III","dormitorios":"2","costo":"82216.42"},{"manzana":"A","lote":"7e","pts":[[2548185.795572,6510957.36888],[2548181.49396,6510947.223576],[2548160.140254,6510954.811019],[2548163.845131,6510965.168356]],"cx":2548172.827923,"cy":6510956.166502,"nombre":"Lote 7e - Mza 1- Microbarrio 1 Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"252.76","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"2029-03-01","etapa":"Santa Lucia II - Etapa III","dormitorios":"2","costo":"82222.17"},{"manzana":"A","lote":"7d","pts":[[2548163.845131,6510965.168356],[2548167.511648,6510975.418452],[2548190.098351,6510967.516937],[2548185.795572,6510957.36888]],"cx":2548176.84109,"cy":6510966.383945,"nombre":"Lote 7d - Mza 1- Microbarrio 1 Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"258.4","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"2029-03-01","etapa":"Santa Lucia II - Etapa III","dormitorios":"2","costo":"82627.19"},{"manzana":"B","lote":"1c","pts":[[2547985.604283,6511000.956311],[2547971.481694,6511006.011258],[2547964.741763,6510987.18114],[2547978.864351,6510982.126192],[2547985.604281,6511000.956312]],"cx":2547975.173022,"cy":6510994.068725,"nombre":"Lote 1c - Mza 2- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa Futura","estilo":"Futura Plus","m2_terreno":"300.0","m2_construido":"53.95","avance_obra":"Pozo","fecha_entrega":"2027-12-01","etapa":"Santa Lucia II - Etapa II","dormitorios":"2","costo":"74459.88"},{"manzana":"B","lote":"1b","pts":[[2547971.481697,6511006.011259],[2547957.359108,6511011.066205],[2547950.619177,6510992.236087],[2547964.741765,6510987.181139],[2547971.481694,6511006.011259]],"cx":2547961.050436,"cy":6510999.123673,"nombre":"Lote 1b - Mza 2- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa Futura","estilo":"Futura Plus","m2_terreno":"300.0","m2_construido":"53.95","avance_obra":"Pozo","fecha_entrega":"2027-12-01","etapa":"Santa Lucia II - Etapa II","dormitorios":"2","costo":"74459.88"},{"manzana":"B","lote":"1a","pts":[[2547950.627438,6510992.259167],[2547936.523166,6510997.28358],[2547940.356509,6511012.438775],[2547945.649291,6511015.259599],[2547957.359108,6511011.066205],[2547950.627438,6510992.259167]],"cx":2547946.677335,"cy":6511004.206345,"nombre":"Lote 1a - Mza 2- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa Futura","estilo":"Futura Plus","m2_terreno":"278.65","m2_construido":"40.68","avance_obra":"Pozo","fecha_entrega":"2027-12-01","etapa":"Santa Lucia II - Etapa II","dormitorios":"1","costo":"63987.88"},{"manzana":"B","lote":"2c","pts":[[2548027.972041,6510985.79147],[2548013.849452,6510990.846416],[2548007.109522,6510972.016298],[2548021.23211,6510966.96135],[2548027.972039,6510985.79147]],"cx":2548017.540781,"cy":6510978.903884,"nombre":"Lote 2c - Mza 2- Natania 74: Santa Lucia II","estado":"Disponible","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa Futura","estilo":"Futura Plus","m2_terreno":"300.0","m2_construido":"53.95","avance_obra":"Pozo","fecha_entrega":"2027-12-01","etapa":"Santa Lucia II - Etapa II","dormitorios":"2","costo":"74459.88"},{"manzana":"B","lote":"2b","pts":[[2548013.849455,6510990.846417],[2547999.726866,6510995.901363],[2547992.986936,6510977.071246],[2548007.109524,6510972.016298],[2548013.849453,6510990.846418]],"cx":2548003.418195,"cy":6510983.958831,"nombre":"Lote 2b - Mza 2- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa Futura","estilo":"Futura Plus","m2_terreno":"300.0","m2_construido":"53.95","avance_obra":"Pozo","fecha_entrega":"2027-12-01","etapa":"Santa Lucia II - Etapa II","dormitorios":"2","costo":"74459.88"},{"manzana":"B","lote":"2a","pts":[[2547999.726869,6510995.901364],[2547985.60428,6511000.956311],[2547978.864349,6510982.126193],[2547992.986938,6510977.071245],[2547999.726867,6510995.901365]],"cx":2547989.295608,"cy":6510989.013778,"nombre":"Lote 2a - Mza 2- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa Futura","estilo":"Futura Plus","m2_terreno":"300.0","m2_construido":"40.68","avance_obra":"Pozo","fecha_entrega":"2027-12-01","etapa":"Santa Lucia II - Etapa II","dormitorios":"1","costo":"65521.06"},{"manzana":"B","lote":"3c","pts":[[2548070.3398,6510970.626628],[2548056.217211,6510975.681574],[2548049.47728,6510956.851457],[2548063.599866,6510951.796506],[2548070.339798,6510970.626629]],"cx":2548059.908539,"cy":6510963.739041,"nombre":"Lote 3c - Mza 2- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa Futura","estilo":"Futura Plus","m2_terreno":"300.0","m2_construido":"53.95","avance_obra":"En Construccion","fecha_entrega":"2026-11-01","etapa":"Santa Lucia II - Etapa I - B","dormitorios":"2","costo":"66173.7"},{"manzana":"B","lote":"3b","pts":[[2548056.217214,6510975.681575],[2548042.094625,6510980.736522],[2548035.354694,6510961.906404],[2548049.477282,6510956.851456],[2548056.217211,6510975.681576]],"cx":2548045.785953,"cy":6510968.793989,"nombre":"Lote 3b - Mza 2- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa Futura","estilo":"Futura Plus","m2_terreno":"300.0","m2_construido":"53.95","avance_obra":"En Construccion","fecha_entrega":"2026-11-01","etapa":"Santa Lucia II - Etapa I - B","dormitorios":"2","costo":"66173.7"},{"manzana":"B","lote":"3a","pts":[[2548042.094627,6510980.736522],[2548027.972039,6510985.791469],[2548021.232108,6510966.961351],[2548035.354696,6510961.906403],[2548042.094625,6510980.736523]],"cx":2548031.663367,"cy":6510973.848936,"nombre":"Lote 3a - Mza 2- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa Futura","estilo":"Futura Plus","m2_terreno":"300.0","m2_construido":"53.95","avance_obra":"En Construccion","fecha_entrega":"2026-11-01","etapa":"Santa Lucia II - Etapa I - B","dormitorios":"2","costo":"66173.7"},{"manzana":"B","lote":"4b","pts":[[2548098.584974,6510960.516731],[2548084.462385,6510965.571678],[2548077.722782,6510946.742476],[2548091.845682,6510941.688401],[2548098.584972,6510960.516732]],"cx":2548088.153901,"cy":6510953.629841,"nombre":"Lote 4b - Mza 2- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa Futura","estilo":"Futura Plus","m2_terreno":"300.0","m2_construido":"53.95","avance_obra":"En Construccion","fecha_entrega":"2026-11-01","etapa":"Santa Lucia II - Etapa I - B","dormitorios":"2","costo":"66173.7"},{"manzana":"B","lote":"4c","pts":[[2548098.58497,6510960.516729],[2548112.366155,6510955.58398],[2548114.930849,6510950.159757],[2548109.621716,6510935.327037],[2548091.845684,6510941.688409],[2548098.584977,6510960.516748]],"cx":2548103.847985,"cy":6510947.790312,"nombre":"Lote 4c - Mza 2- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa Futura","estilo":"Futura Plus","m2_terreno":"368.62","m2_construido":"53.95","avance_obra":"En Construccion","fecha_entrega":"2026-11-01","etapa":"Santa Lucia II - Etapa I - B","dormitorios":"2","costo":"71101.42"},{"manzana":"B","lote":"5b","pts":[[2548091.845683,6510941.688401],[2548077.722778,6510946.742465],[2548070.982519,6510927.911431],[2548085.105108,6510922.856483],[2548091.845681,6510941.688402]],"cx":2548081.414077,"cy":6510934.799675,"nombre":"Lote 5b - Mza 2- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa Futura","estilo":"Futura Plus","m2_terreno":"300.0","m2_construido":"40.68","avance_obra":"En Construccion","fecha_entrega":"2026-11-01","etapa":"Santa Lucia II - Etapa I - B","dormitorios":"1","costo":"56807.46"},{"manzana":"B","lote":"5c","pts":[[2548077.722784,6510946.742474],[2548063.599864,6510951.796497],[2548056.859934,6510932.96638],[2548070.982522,6510927.911432],[2548077.722782,6510946.742475]],"cx":2548067.291333,"cy":6510939.854175,"nombre":"Lote 5c - Mza 2- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa Futura","estilo":"Futura Plus","m2_terreno":"300.0","m2_construido":"53.95","avance_obra":"En Construccion","fecha_entrega":"2026-11-01","etapa":"Santa Lucia II - Etapa I - B","dormitorios":"2","costo":"66173.7"},{"manzana":"B","lote":"5a","pts":[[2548109.621956,6510935.327708],[2548091.845685,6510941.688409],[2548085.105108,6510922.856483],[2548098.888701,6510917.924904],[2548104.310497,6510920.488473],[2548109.621954,6510935.327708]],"cx":2548097.249802,"cy":6510929.355376,"nombre":"Lote 5a - Mza 2- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa Futura","estilo":"Futura Plus","m2_terreno":"368.58","m2_construido":"53.95","avance_obra":"En Construccion","fecha_entrega":"2026-11-01","etapa":"Santa Lucia II - Etapa I - B","dormitorios":"2","costo":"71098.55"},{"manzana":"B","lote":"6a","pts":[[2548063.599867,6510951.796505],[2548049.477276,6510956.851445],[2548042.737345,6510938.021328],[2548056.859934,6510932.96638],[2548063.599865,6510951.796506]],"cx":2548053.168606,"cy":6510944.908914,"nombre":"Lote 6a - Mza 2- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa Futura","estilo":"Futura Plus","m2_terreno":"300.0","m2_construido":"53.95","avance_obra":"En Construccion","fecha_entrega":"2026-11-01","etapa":"Santa Lucia II - Etapa I - B","dormitorios":"2","costo":"66173.7"},{"manzana":"B","lote":"6b","pts":[[2548049.477279,6510956.851446],[2548035.35469,6510961.906393],[2548028.614759,6510943.076275],[2548042.737348,6510938.021327],[2548049.477277,6510956.851447]],"cx":2548039.046018,"cy":6510949.96386,"nombre":"Lote 6b - Mza 2- Natania 74: Santa Lucia II","estado":"Disponible","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa Futura","estilo":"Futura Plus","m2_terreno":"300.0","m2_construido":"40.68","avance_obra":"En Construccion","fecha_entrega":"2026-11-01","etapa":"Santa Lucia II - Etapa I - B","dormitorios":"1","costo":"56807.46"},{"manzana":"B","lote":"6c","pts":[[2548035.354693,6510961.906393],[2548021.232104,6510966.96134],[2548014.492173,6510948.131222],[2548028.614761,6510943.076274],[2548035.354691,6510961.906394]],"cx":2548024.923432,"cy":6510955.018807,"nombre":"Lote 6c - Mza 2- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa Futura","estilo":"Futura Plus","m2_terreno":"300.0","m2_construido":"40.68","avance_obra":"En Construccion","fecha_entrega":"2026-11-01","etapa":"Santa Lucia II - Etapa I - B","dormitorios":"1","costo":"56807.46"},{"manzana":"B","lote":"7a","pts":[[2548021.232107,6510966.961341],[2548007.109518,6510972.016287],[2548000.369587,6510953.186169],[2548014.492175,6510948.131221],[2548021.232104,6510966.961341]],"cx":2548010.800846,"cy":6510960.073755,"nombre":"Lote 7a - Mza 2- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa Futura","estilo":"Futura Plus","m2_terreno":"300.0","m2_construido":"53.95","avance_obra":"Pozo","fecha_entrega":"2027-12-01","etapa":"Santa Lucia II - Etapa II","dormitorios":"2","costo":"74459.88"},{"manzana":"B","lote":"7b","pts":[[2548007.10952,6510972.016288],[2547992.986931,6510977.071234],[2547986.247001,6510958.241117],[2548000.369589,6510953.186169],[2548007.109518,6510972.016289]],"cx":2547996.67826,"cy":6510965.128702,"nombre":"Lote 7b - Mza 2- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa Futura","estilo":"Futura Plus","m2_terreno":"300.0","m2_construido":"53.95","avance_obra":"Pozo","fecha_entrega":"2027-12-01","etapa":"Santa Lucia II - Etapa II","dormitorios":"2","costo":"74459.88"},{"manzana":"B","lote":"7c","pts":[[2547992.986934,6510977.071235],[2547978.864345,6510982.126182],[2547972.124415,6510963.296064],[2547986.247003,6510958.241116],[2547992.986932,6510977.071236]],"cx":2547982.555674,"cy":6510970.183649,"nombre":"Lote 7c - Mza 2- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa Futura","estilo":"Futura Plus","m2_terreno":"300.0","m2_construido":"53.95","avance_obra":"Pozo","fecha_entrega":"2027-12-01","etapa":"Santa Lucia II - Etapa II","dormitorios":"2","costo":"74459.88"},{"manzana":"B","lote":"8a","pts":[[2547978.864348,6510982.126182],[2547964.741759,6510987.181129],[2547958.001828,6510968.351011],[2547972.124417,6510963.296063],[2547978.864346,6510982.126183]],"cx":2547968.433088,"cy":6510975.238596,"nombre":"Lote 8a - Mza 2- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa Futura","estilo":"Futura Plus","m2_terreno":"300.0","m2_construido":"53.95","avance_obra":"Pozo","fecha_entrega":"2027-12-01","etapa":"Santa Lucia II - Etapa II","dormitorios":"2","costo":"74459.88"},{"manzana":"B","lote":"8b","pts":[[2547964.741762,6510987.18113],[2547950.619177,6510992.236087],[2547943.879246,6510973.40597],[2547958.001831,6510968.35101],[2547964.74176,6510987.18113]],"cx":2547954.310503,"cy":6510980.293549,"nombre":"Lote 8b - Mza 2- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa Futura","estilo":"Futura Plus","m2_terreno":"300.0","m2_construido":"53.95","avance_obra":"Pozo","fecha_entrega":"2027-12-01","etapa":"Santa Lucia II - Etapa II","dormitorios":"2","costo":"74459.88"},{"manzana":"B","lote":"8c","pts":[[2547936.523166,6510997.28358],[2547950.627438,6510992.259167],[2547943.879246,6510973.40597],[2547935.409256,6510976.439721],[2547932.589284,6510981.730904],[2547936.523166,6510997.28358]],"cx":2547940.950443,"cy":6510985.610058,"nombre":"Lote 8c - Mza 2- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa Futura","estilo":"Futura Plus","m2_terreno":"241.84","m2_construido":"53.95","avance_obra":"Pozo","fecha_entrega":"2027-12-01","etapa":"Santa Lucia II - Etapa II","dormitorios":"2","costo":"70283.3"},{"manzana":"B","lote":"4a","pts":[[2548084.462388,6510965.57168],[2548070.339799,6510970.626626],[2548063.599869,6510951.796509],[2548077.722783,6510946.742474],[2548084.462386,6510965.571681]],"cx":2548074.031152,"cy":6510958.684343,"nombre":"Lote 4a - Mza 2- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa Futura","estilo":"Futura Plus","m2_terreno":"300.0","m2_construido":"53.95","avance_obra":"En Construccion","fecha_entrega":"2026-11-01","etapa":"Santa Lucia II - Etapa I - B","dormitorios":"2","costo":"66173.7"},{"manzana":"C","lote":"1c","pts":[[2548105.485124,6510877.964514],[2548110.246101,6510891.433035],[2548126.763382,6510885.553054],[2548121.962449,6510872.066737]],"cx":2548116.117888,"cy":6510881.755332,"nombre":"Lote 1c - Mza 3 - Microbarrio 2 - Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Mediterranea","m2_terreno":"250.49","m2_construido":"62.0","avance_obra":"En Construccion","fecha_entrega":"2026-07-01","etapa":"Santa Lucia II - Etapa I - A","dormitorios":"2","costo":"72136.13"},{"manzana":"C","lote":"1f","pts":[[2548129.499143,6510869.383783],[2548134.558586,6510883.596283],[2548151.881798,6510877.395725],[2548145.976974,6510863.471133]],"cx":2548140.50316,"cy":6510873.519544,"nombre":"Lote 1f - Mza 3 - Microbarrio 2 - Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa","estilo":"Mediterranea","m2_terreno":"271.06","m2_construido":"72.0","avance_obra":"En Construccion","fecha_entrega":"2026-07-01","etapa":"Santa Lucia II - Etapa I - A","dormitorios":"3","costo":"79471.0"},{"manzana":"C","lote":"1b","pts":[[2548110.246154,6510891.433016],[2548115.01201,6510904.91551],[2548131.559183,6510899.024957],[2548126.763382,6510885.553054]],"cx":2548120.89591,"cy":6510895.233665,"nombre":"Lote 1b - Mza 3 - Microbarrio 2 - Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Mediterranea","m2_terreno":"250.94","m2_construido":"72.0","avance_obra":"En Construccion","fecha_entrega":"2026-07-01","etapa":"Santa Lucia II - Etapa I - A","dormitorios":"3","costo":"78026.14"},{"manzana":"C","lote":"1a","pts":[[2548115.012116,6510904.915472],[2548131.559161,6510899.024895],[2548136.35494,6510912.496736],[2548119.777919,6510918.397984]],"cx":2548125.676755,"cy":6510908.710805,"nombre":"Lote 1a - Mza 3 - Microbarrio 2 - Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Mediterranea","m2_terreno":"251.4","m2_construido":"62.0","avance_obra":"En Construccion","fecha_entrega":"2026-07-01","etapa":"Santa Lucia II - Etapa I - A","dormitorios":"2","costo":"72201.48"},{"manzana":"C","lote":"1e","pts":[[2548134.558586,6510883.596283],[2548139.153151,6510896.502891],[2548157.239158,6510890.029303],[2548151.881798,6510877.395725]],"cx":2548145.726039,"cy":6510886.9269,"nombre":"Lote 1e - Mza 3 - Microbarrio 2 - Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Mediterranea","m2_terreno":"257.44","m2_construido":"62.0","avance_obra":"En Construccion","fecha_entrega":"2026-07-01","etapa":"Santa Lucia II - Etapa I - A","dormitorios":"2","costo":"72635.22"},{"manzana":"C","lote":"1d","pts":[[2548139.153151,6510896.502891],[2548143.891632,6510909.813775],[2548162.777586,6510903.089869],[2548157.239158,6510890.029303]],"cx":2548150.787246,"cy":6510899.904502,"nombre":"Lote 1d - Mza 3 - Microbarrio 2 - Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Mediterranea","m2_terreno":"277.66","m2_construido":"32.0","avance_obra":"En Construccion","fecha_entrega":"2026-07-01","etapa":"Santa Lucia II - Etapa I - A","dormitorios":"0","costo":"72741.87"},{"manzana":"C","lote":"1","pts":[[2548136.35494,6510912.496736],[2548143.891624,6510909.813778],[2548129.499143,6510869.383783],[2548121.962446,6510872.066728]],"cx":2548132.927037,"cy":6510890.940253,"nombre":"Zona 1 - Mza C","estado":"Sin datos","negocio_comercial":"","tipo_inmueble":"","estilo":"","m2_terreno":"","m2_construido":"","avance_obra":"","fecha_entrega":"","etapa":"","dormitorios":"","costo":""},{"manzana":"C","lote":"2a","pts":[[2548105.485107,6510877.96453],[2548112.280052,6510897.186722],[2548100.112795,6510901.541668],[2548093.433216,6510882.278306]],"cx":2548102.833145,"cy":6510889.758076,"nombre":"Lote 2a - Mza 3- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"262.22","m2_construido":"58.0","avance_obra":"En Construccion","fecha_entrega":"2026-07-01","etapa":"Santa Lucia II - Etapa I - A","dormitorios":"2","costo":"65701.07"},{"manzana":"C","lote":"2b","pts":[[2548093.433216,6510882.278306],[2548100.112775,6510901.541676],[2548088.060984,6510905.855294],[2548081.381324,6510886.592082]],"cx":2548090.747074,"cy":6510894.066819,"nombre":"Lote 2b - Mza 3- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"260.97","m2_construido":"58.0","avance_obra":"En Construccion","fecha_entrega":"2026-07-01","etapa":"Santa Lucia II - Etapa I - A","dormitorios":"2","costo":"65611.3"},{"manzana":"C","lote":"2c","pts":[[2548081.381324,6510886.592082],[2548088.060964,6510905.855301],[2548076.009035,6510910.168969],[2548069.329473,6510890.905844]],"cx":2548078.695207,"cy":6510898.380552,"nombre":"Lote 2c - Mza 3- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"260.97","m2_construido":"58.0","avance_obra":"En Construccion","fecha_entrega":"2026-07-01","etapa":"Santa Lucia II - Etapa I - A","dormitorios":"2","costo":"65611.3"},{"manzana":"C","lote":"2d","pts":[[2548069.329433,6510890.905858],[2548076.009015,6510910.168976],[2548063.957004,6510914.482673],[2548057.277582,6510895.21962]],"cx":2548066.64327,"cy":6510902.694296,"nombre":"Lote 2d - Mza 3- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"260.97","m2_construido":"58.0","avance_obra":"En Construccion","fecha_entrega":"2026-07-01","etapa":"Santa Lucia II - Etapa I - A","dormitorios":"2","costo":"65611.3"},{"manzana":"C","lote":"3c","pts":[[2548033.173839,6510903.847158],[2548039.853262,6510923.110211],[2548031.070773,6510926.253758],[2548025.6502,6510923.699251],[2548020.205879,6510908.488826]],"cx":2548030.140041,"cy":6510915.421875,"nombre":"Lote 3c - Mza 3- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"269.76","m2_construido":"68.0","avance_obra":"En Construccion","fecha_entrega":"2026-07-01","etapa":"Santa Lucia II - Etapa I - A","dormitorios":"3","costo":"71713.37"},{"manzana":"C","lote":"3a","pts":[[2548057.277582,6510895.21962],[2548063.957004,6510914.482673],[2548051.905133,6510918.796442],[2548045.22571,6510899.533389]],"cx":2548054.591357,"cy":6510907.008031,"nombre":"Lote 3a - Mza 3- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"260.97","m2_construido":"58.0","avance_obra":"En Construccion","fecha_entrega":"2026-07-01","etapa":"Santa Lucia II - Etapa I - A","dormitorios":"2","costo":"65611.3"},{"manzana":"C","lote":"3b","pts":[[2548045.22569,6510899.533396],[2548051.905133,6510918.796442],[2548039.853262,6510923.110211],[2548033.173839,6510903.847158]],"cx":2548042.539482,"cy":6510911.321804,"nombre":"Lote 3b - Mza 3- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"260.97","m2_construido":"58.0","avance_obra":"En Construccion","fecha_entrega":"2026-07-01","etapa":"Santa Lucia II - Etapa I - A","dormitorios":"2","costo":"65611.3"},{"manzana":"D","lote":"1c","pts":[[2547976.329134,6510945.847625],[2547988.380409,6510941.53407],[2547981.509987,6510922.339383],[2547969.458712,6510926.652939],[2547976.329134,6510945.847625]],"cx":2547978.919561,"cy":6510934.093504,"nombre":"Lote 1c - Mza 4- Natania 74: Santa Lucia II","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"260.95","m2_construido":"68.0","avance_obra":"En Construccion","fecha_entrega":"2026-07-01","etapa":"Santa Lucia II - Etapa I - A","dormitorios":"3","costo":"71080.7"},{"manzana":"D","lote":"1b","pts":[[2547988.380409,6510941.53407],[2548000.431685,6510937.220514],[2547993.561263,6510918.025828],[2547981.509987,6510922.339383],[2547988.380409,6510941.53407]],"cx":2547990.970836,"cy":6510929.779949,"nombre":"Lote 1b - Mza 4- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"260.95","m2_construido":"58.0","avance_obra":"En Construccion","fecha_entrega":"2026-07-01","etapa":"Santa Lucia II - Etapa I - A","dormitorios":"2","costo":"65609.87"},{"manzana":"D","lote":"1a","pts":[[2548000.431685,6510937.220514],[2548008.959242,6510934.168216],[2548011.527612,6510928.754198],[2548006.083291,6510913.543774],[2547993.561263,6510918.025828],[2548000.431685,6510937.220514]],"cx":2548002.98735,"cy":6510925.159414,"nombre":"Lote 1a - Mza 4- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"262.17","m2_construido":"68.0","avance_obra":"En Construccion","fecha_entrega":"2026-07-01","etapa":"Santa Lucia II - Etapa I - A","dormitorios":"3","costo":"71168.32"},{"manzana":"D","lote":"2b","pts":[[2547952.226583,6510954.474736],[2547964.277858,6510950.161181],[2547957.407436,6510930.966494],[2547945.356161,6510935.28005],[2547952.226583,6510954.474736]],"cx":2547954.81701,"cy":6510942.720615,"nombre":"Lote 2b - Mza 4- Natania 74: Santa Lucia II","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"260.96","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"2029-03-01","etapa":"Santa Lucia II - Etapa III","dormitorios":"2","costo":"77491.2"},{"manzana":"D","lote":"2a","pts":[[2547964.277858,6510950.161181],[2547976.329134,6510945.847625],[2547969.458712,6510926.652939],[2547957.407436,6510930.966494],[2547964.277858,6510950.161181]],"cx":2547966.868285,"cy":6510938.40706,"nombre":"Lote 2a - Mza 4- Natania 74: Santa Lucia II","estado":"Adjudicado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"260.95","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"2029-03-01","etapa":"Santa Lucia II - Etapa III","dormitorios":"2","costo":"77490.48"},{"manzana":"D","lote":"2e","pts":[[2547913.70986,6510968.261163],[2547928.124032,6510963.101847],[2547921.25361,6510943.907161],[2547908.68746,6510948.405008],[2547913.70986,6510968.261163]],"cx":2547918.011624,"cy":6510956.141694,"nombre":"Lote 2e - Mza 4- Natania 74: Santa Lucia II","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"261.37","m2_construido":"68.0","avance_obra":"Pozo","fecha_entrega":"2029-03-01","etapa":"Santa Lucia II - Etapa III","dormitorios":"3","costo":"85438.0"},{"manzana":"D","lote":"2d","pts":[[2547928.124032,6510963.101847],[2547940.175308,6510958.788292],[2547933.304886,6510939.593606],[2547921.25361,6510943.907161],[2547928.124032,6510963.101847]],"cx":2547930.714459,"cy":6510951.347727,"nombre":"Lote 2d - Mza 4- Natania 74: Santa Lucia II","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"260.96","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"2029-03-01","etapa":"Santa Lucia II - Etapa III","dormitorios":"2","costo":"77491.2"},{"manzana":"D","lote":"2c","pts":[[2547940.175308,6510958.788292],[2547952.226583,6510954.474736],[2547945.356161,6510935.28005],[2547933.304886,6510939.593606],[2547940.175308,6510958.788292]],"cx":2547942.765734,"cy":6510947.034171,"nombre":"Lote 2c - Mza 4- Natania 74: Santa Lucia II","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"260.96","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"2029-03-01","etapa":"Santa Lucia II - Etapa III","dormitorios":"2","costo":"77491.2"}],"manzanas":[{"label":"A","pts":[[2547933.796203,6511035.438817],[2548128.109945,6510941.968793],[2548152.444102,6510933.295695],[2548172.556486,6510926.144643],[2548185.795572,6510957.36888],[2548190.098351,6510967.516937],[2547999.579851,6511034.166664],[2547949.655102,6511051.6314],[2547938.847088,6511055.407586]]},{"label":"B","pts":[[2547932.589284,6510981.730904],[2547935.409256,6510976.439721],[2547943.879246,6510973.40597],[2547958.001828,6510968.351011],[2548070.982519,6510927.911431],[2548085.105108,6510922.856483],[2548098.888701,6510917.924904],[2548104.310497,6510920.488473],[2548114.930849,6510950.159757],[2548112.366155,6510955.58398],[2547945.649291,6511015.259599],[2547940.356509,6511012.438775]]},{"label":"C","pts":[[2548020.205879,6510908.488826],[2548105.485124,6510877.964514],[2548145.976974,6510863.471133],[2548162.777586,6510903.089869],[2548143.891632,6510909.813775],[2548119.777919,6510918.397984],[2548031.070773,6510926.253758],[2548025.6502,6510923.699251]]},{"label":"D","pts":[[2547908.68746,6510948.405008],[2547921.25361,6510943.907161],[2547957.407436,6510930.966494],[2547981.509987,6510922.339383],[2548006.083291,6510913.543774],[2548011.527612,6510928.754198],[2548008.959242,6510934.168216],[2547940.175308,6510958.788292],[2547913.70986,6510968.261163]]}],"bbox":{"minx":2547908.68746,"miny":6510863.471133,"maxx":2548190.098351,"maxy":6511055.407586}};
+
+function normalizeEstado(e){
+  if(e==='Escriturado') return 'Entregado';
+  if(e==='Reservado SAAT') return 'Adjudicado';
+  return e||'Sin datos';
+}
+
+const DATA={
+  ...RAW_DATA,
+  lots: RAW_DATA.lots.map(l=>({...l,estado:normalizeEstado(l.estado)}))
+};
+
+const SCHEMES={
+  estado:{
+    getKey:l=>l.estado,
+    colors:{
+      'Disponible':'#22d3a0',
+      'Adjudicado':'#f5a623',
+      'Entregado':'#7dd3fc',
+      'No Disponible':'#e85555',
+      'Sin datos':'#474d5f',
+    }
+  },
+  tipo:{
+    getKey:l=>l.tipo_inmueble||'—',
+    colors:{
+      'Casa':'#4f8ef7',
+      'Casa Futura':'#a78bfa',
+      'Lote':'#34d399',
+      'Macrolote':'#fbbf24',
+      '—':'#474d5f',
+    }
+  },
+  estilo:{
+    getKey:l=>l.estilo||'—',
+    colors:{
+      'Europea':'#4f8ef7',
+      'Mediterranea':'#f97316',
+      'Americana':'#a3e635',
+      'Futura':'#a78bfa',
+      'Futura Plus':'#c084fc',
+      '—':'#474d5f',
+    }
+  }
+};
+
+let colorMode='estado';
+let legendFilters=new Set();
+let selectedIdx=null;
+
+const svg=document.getElementById('map-svg');
+const mapWrap=document.getElementById('map-wrap');
+const W=960,H=800,PAD=28;
+const bb=DATA.bbox;
+const scale=Math.min((W-PAD*2)/(bb.maxx-bb.minx),(H-PAD*2)/(bb.maxy-bb.miny));
+const tx=x=>PAD+(x-bb.minx)*scale;
+const ty=y=>H-PAD-(y-bb.miny)*scale;
+const p2s=pts=>pts.map(p=>`${tx(p[0])},${ty(p[1])}`).join(' ');
+
+svg.setAttribute('width',W); svg.setAttribute('height',H);
+svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+
+// Manzana outlines
+const mzG=document.createElementNS('http://www.w3.org/2000/svg','g');
+DATA.manzanas.forEach(mz=>{
+  const poly=document.createElementNS('http://www.w3.org/2000/svg','polygon');
+  poly.setAttribute('points',p2s(mz.pts)); poly.setAttribute('class','mzn-poly');
+  mzG.appendChild(poly);
+  const cx=mz.pts.reduce((s,p)=>s+p[0],0)/mz.pts.length;
+  const cy=mz.pts.reduce((s,p)=>s+p[1],0)/mz.pts.length;
+  const lbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+  lbl.setAttribute('x',tx(cx)); lbl.setAttribute('y',ty(cy));
+  lbl.setAttribute('class','mzn-lbl'); lbl.textContent=`MZA ${mz.label}`;
+  mzG.appendChild(lbl);
+});
+svg.appendChild(mzG);
+
+// Lot polygons
+const lotG=document.createElementNS('http://www.w3.org/2000/svg','g');
+const lotEls=[];
+DATA.lots.forEach((lot,i)=>{
+  const poly=document.createElementNS('http://www.w3.org/2000/svg','polygon');
+  poly.setAttribute('points',p2s(lot.pts)); poly.setAttribute('class','lot-poly');
+  if(lot.estado!=='Sin datos') poly.addEventListener('click',()=>selectLot(i));
+  lotG.appendChild(poly); lotEls.push(poly);
+  const cx=lot.cx; const cy=lot.cy;
+  const lbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+  lbl.setAttribute('x',tx(cx)); lbl.setAttribute('y',ty(cy));
+  lbl.setAttribute('class','lot-lbl'); lbl.textContent=lot.lote||'';
+  lotG.appendChild(lbl);
+});
+svg.appendChild(lotG);
+
+function getColor(lot){
+  const s=SCHEMES[colorMode],k=s.getKey(lot);
+  return s.colors[k]||'#474d5f';
+}
+function applyColors(){
+  DATA.lots.forEach((lot,i)=>{
+    if(lot.estado==='Sin datos'){
+      lotEls[i].setAttribute('fill','#3a3f50');
+      lotEls[i].setAttribute('fill-opacity','0.5');
+      lotEls[i].style.pointerEvents='none';
+    } else {
+      lotEls[i].setAttribute('fill',getColor(lot));
+      lotEls[i].setAttribute('fill-opacity','0.82');
+      lotEls[i].style.pointerEvents='';
+    }
+  });
+}
+
+// Legend
+function buildLegend(){
+  const s=SCHEMES[colorMode],el=document.getElementById('legend');
+  el.innerHTML='';
+  Object.entries(s.colors).forEach(([key,color])=>{
+    const total=DATA.lots.filter(l=>l.estado!=='Sin datos'&&s.getKey(l)===key).length;
+    if(!total) return;
+    const div=document.createElement('div');
+    div.className='leg-item'+(legendFilters.has(key)?' on':'');
+    div.innerHTML=`<div class="leg-dot" style="background:${color}"></div>${key}<span class="leg-count">${total}</span>`;
+    div.addEventListener('click',e=>{
+      if(e.ctrlKey||e.metaKey){legendFilters.has(key)?legendFilters.delete(key):legendFilters.add(key);}
+      else{if(legendFilters.size===1&&legendFilters.has(key)) legendFilters.clear(); else{legendFilters.clear();legendFilters.add(key);}}
+      updateFilters();
+    });
+    el.appendChild(div);
+  });
+}
+
+// Pan/zoom
+let offX=0,offY=0,zoom=1,dragging=false,lx,ly;
+function applyTf(){svg.style.transform=`translate(${offX}px,${offY}px) scale(${zoom})`;}
+mapWrap.addEventListener('mousedown',e=>{dragging=true;lx=e.clientX;ly=e.clientY;});
+document.addEventListener('mousemove',e=>{if(!dragging)return;offX+=e.clientX-lx;offY+=e.clientY-ly;lx=e.clientX;ly=e.clientY;applyTf();});
+document.addEventListener('mouseup',()=>dragging=false);
+mapWrap.addEventListener('wheel',e=>{
+  e.preventDefault();
+  const r=mapWrap.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;
+  const nz=Math.min(Math.max(zoom*(e.deltaY>0?.85:1.18),.4),16);
+  offX=mx-(mx-offX)*(nz/zoom);offY=my-(my-offY)*(nz/zoom);zoom=nz;applyTf();
+},{passive:false});
+document.getElementById('zin').addEventListener('click',()=>{
+  const r=mapWrap.getBoundingClientRect(),cx=r.width/2,cy=r.height/2;
+  const nz=Math.min(zoom*1.3,16);offX=cx-(cx-offX)*(nz/zoom);offY=cy-(cy-offY)*(nz/zoom);zoom=nz;applyTf();
+});
+document.getElementById('zout').addEventListener('click',()=>{
+  const r=mapWrap.getBoundingClientRect(),cx=r.width/2,cy=r.height/2;
+  const nz=Math.max(zoom*.77,.4);offX=cx-(cx-offX)*(nz/zoom);offY=cy-(cy-offY)*(nz/zoom);zoom=nz;applyTf();
+});
+document.getElementById('fit-btn').addEventListener('click',fitView);
+function fitView(){
+  const r=mapWrap.getBoundingClientRect();
+  zoom=Math.min(r.width/W,r.height/H)*.92;
+  offX=(r.width-W*zoom)/2; offY=(r.height-H*zoom)/2; applyTf();
+}
+window.addEventListener('resize',fitView);
+setTimeout(fitView,80);
+
+// Filters
+function getSelValues(id){
+  const sel=document.getElementById(id);
+  if(sel.multiple) return Array.from(sel.selectedOptions).map(o=>o.value);
+  return sel.value?[sel.value]:[];
+}
+function lotMatches(lot){
+  if(lot.estado==='Sin datos') return false;
+  const s=SCHEMES[colorMode];
+  if(legendFilters.size>0&&!legendFilters.has(s.getKey(lot))) return false;
+  const tipo=getSelValues('f-tipo');
+  const neg=getSelValues('f-negocio');
+  const eta=getSelValues('f-etapa');
+  const ava=getSelValues('f-avance');
+  const mzn=getSelValues('f-manzana');
+  if(tipo.length&&!tipo.includes(lot.tipo_inmueble)) return false;
+  if(neg.length&&!neg.includes(lot.negocio_comercial)) return false;
+  if(eta.length&&!eta.includes(lot.etapa)) return false;
+  if(ava.length&&!ava.includes(lot.avance_obra)) return false;
+  if(mzn.length&&!mzn.includes(lot.manzana)) return false;
+  return true;
+}
+function fmtUSD(n){
+  if(!n) return 'USD 0';
+  return 'USD '+n.toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:0});
+}
+function updateFilters(){
+  let total=0,totalUSD=0,disp=0,dispUSD=0,adj=0,adjUSD=0,ent=0,entUSD=0;
+  DATA.lots.forEach((lot,i)=>{
+    const match=lotMatches(lot);
+    lotEls[i].classList.toggle('dimmed',lot.estado!=='Sin datos'&&!match);
+    if(!match) return;
+    const cost=parseFloat(lot.costo)||0;
+    total++;totalUSD+=cost;
+    if(lot.estado==='Disponible'){disp++;dispUSD+=cost;}
+    if(lot.estado==='Adjudicado'){adj++;adjUSD+=cost;}
+    if(lot.estado==='Entregado'){ent++;entUSD+=cost;}
+  });
+  document.getElementById('kpi-total-q').textContent=total;
+  document.getElementById('kpi-total-usd').textContent=fmtUSD(totalUSD);
+  document.getElementById('kpi-disp-q').textContent=disp;
+  document.getElementById('kpi-disp-usd').textContent=fmtUSD(dispUSD);
+  document.getElementById('kpi-adj-q').textContent=adj;
+  document.getElementById('kpi-adj-usd').textContent=fmtUSD(adjUSD);
+  document.getElementById('kpi-ent-q').textContent=ent;
+  document.getElementById('kpi-ent-usd').textContent=fmtUSD(entUSD);
+  buildLegend();
+}
+
+function populateSel(id,values){
+  const sel=document.getElementById(id);
+  [...new Set(values.filter(v=>v&&v!=='nan'))].sort().forEach(v=>{
+    const o=document.createElement('option');o.value=o.textContent=v;sel.appendChild(o);
+  });
+}
+populateSel('f-negocio',DATA.lots.map(l=>l.negocio_comercial));
+populateSel('f-etapa',DATA.lots.map(l=>l.etapa));
+populateSel('f-avance',DATA.lots.map(l=>l.avance_obra));
+
+['f-tipo','f-negocio','f-etapa','f-avance','f-manzana'].forEach(id=>{
+  document.getElementById(id).addEventListener('change',updateFilters);
+});
+document.getElementById('reset-btn').addEventListener('click',()=>{
+  ['f-negocio','f-etapa','f-avance','f-manzana'].forEach(id=>document.getElementById(id).value='');
+  Array.from(document.getElementById('f-tipo').options).forEach(o=>o.selected=false);
+  legendFilters.clear(); updateFilters();
+});
+
+document.querySelectorAll('.mode-tab').forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    document.querySelectorAll('.mode-tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    colorMode=tab.dataset.mode; legendFilters.clear();
+    applyColors(); updateFilters();
+  });
+});
+
+const detailEl=document.getElementById('detail-panel');
+
+function deselectLot(){
+  if(selectedIdx!==null) lotEls[selectedIdx].classList.remove('sel');
+  selectedIdx=null; detailEl.classList.remove('open');
+}
+function selectLot(i){
+  if(selectedIdx===i){deselectLot();return;}
+  if(selectedIdx!==null) lotEls[selectedIdx].classList.remove('sel');
+  selectedIdx=i; lotEls[i].classList.add('sel');
+  renderDetail(DATA.lots[i]); detailEl.classList.add('open');
+}
+mapWrap.addEventListener('click',e=>{if(e.target===mapWrap||e.target===svg) deselectLot();});
+
+const fv=v=>(!v||v==='nan'||v==='None'||v==='')?'—':v;
+const fm2=v=>{if(!v||v==='nan'||v==='')return'—';const n=parseFloat(v);return isNaN(n)?'—':n.toFixed(2)+' m²';};
+const fusd=v=>{if(!v||v==='nan'||v==='')return'—';const n=parseFloat(v);return isNaN(n)?'—':'USD '+n.toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:0});};
+const fdate=v=>{
+  if(!v||v==='nan'||v==='')return'—';
+  try{const d=new Date(v);if(isNaN(d))return v;return String(d.getUTCMonth()+1).padStart(2,'0')+' '+d.getUTCFullYear();}
+  catch(e){return v;}
+};
+
+function renderDetail(lot){
+  const color=getColor(lot);
+  document.getElementById('det-name').textContent=lot.nombre||`Mza ${lot.manzana} · Lote ${lot.lote}`;
+  const badge=document.getElementById('det-badge');
+  badge.style.display='inline-flex';
+  badge.style.background=color+'28'; badge.style.color=color; badge.style.border=`1px solid ${color}45`;
+  badge.innerHTML=`<span style="width:5px;height:5px;border-radius:50%;background:${color};display:inline-block"></span>${lot.estado||'—'}`;
+  const etapaClean=(lot.etapa||'').replace(/Santa Lucia II - /g,'').replace(/Santa Lucía II - /g,'');
+  document.getElementById('det-body').innerHTML=`
+    <div class="det-grp">
+      <div class="det-grp-ttl">Ubicación</div>
+      <div class="det-row"><span class="det-k">Manzana</span><span class="det-v">${fv(lot.manzana)}</span></div>
+      <div class="det-row"><span class="det-k">Lote</span><span class="det-v">${fv(lot.lote)}</span></div>
+      <div class="det-row"><span class="det-k">Etapa</span><span class="det-v">${fv(etapaClean)}</span></div>
+    </div>
+    <div class="det-grp">
+      <div class="det-grp-ttl">Producto</div>
+      <div class="det-row"><span class="det-k">Tipo</span><span class="det-v">${fv(lot.tipo_inmueble)}</span></div>
+      <div class="det-row"><span class="det-k">Estilo</span><span class="det-v">${fv(lot.estilo)}</span></div>
+      <div class="det-row"><span class="det-k">Dormitorios</span><span class="det-v">${fv(lot.dormitorios)}</span></div>
+    </div>
+    <div class="det-grp">
+      <div class="det-grp-ttl">Superficies</div>
+      <div class="det-row"><span class="det-k">Terreno total</span><span class="det-v">${fm2(lot.m2_terreno)}</span></div>
+      <div class="det-row"><span class="det-k">Construido</span><span class="det-v">${fm2(lot.m2_construido)}</span></div>
+    </div>
+    <div class="det-grp">
+      <div class="det-grp-ttl">Comercial</div>
+      <div class="det-row"><span class="det-k">Negocio</span><span class="det-v">${fv(lot.negocio_comercial)}</span></div>
+      <div class="det-row"><span class="det-k">Avance obra</span><span class="det-v">${fv(lot.avance_obra)}</span></div>
+      <div class="det-row"><span class="det-k">Entrega planif.</span><span class="det-v">${fdate(lot.fecha_entrega)}</span></div>
+    </div>
+    <div class="det-grp">
+      <div class="det-grp-ttl">Precio</div>
+      <div class="det-row"><span class="det-k">Costo</span><span class="det-v mono">${fusd(lot.costo)}</span></div>
+    </div>`;
+}
+
+applyColors();
+updateFilters();
+
+document.getElementById('expand-btn').addEventListener('click',()=>{
+  document.body.classList.toggle('map-expanded');
+  setTimeout(fitView,50);
+});
+</script>
+</body>
+</html>

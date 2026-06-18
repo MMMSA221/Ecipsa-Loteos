@@ -15,7 +15,8 @@
       "merge_ab": false,
       "pipeline": "N73 - Nuevo Maipú",
       "link_sitio": "",
-      "link_pipeline": ""
+      "link_pipeline": "",
+      "tablero_html": "N73.html"
     },
     {
       "codigo": "N62",
@@ -52,7 +53,8 @@
             -68.854314
           ]
         }
-      ]
+      ],
+      "tablero_html": "N62.html"
     },
     {
       "codigo": "N65",
@@ -82,7 +84,8 @@
       ],
       "green_manzana": "^EV",
       "link_sitio": "",
-      "link_pipeline": ""
+      "link_pipeline": "",
+      "tablero_html": ""
     },
     {
       "codigo": "N74",
@@ -109,7 +112,8 @@
       ],
       "lote_fallback": true,
       "link_sitio": "",
-      "link_pipeline": ""
+      "link_pipeline": "",
+      "tablero_html": "N74.html"
     }
   ]
 }

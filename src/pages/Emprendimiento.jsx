@@ -278,6 +278,29 @@ export default function Emprendimiento() {
     </div>
   )
 
+  /* ───────── Vista HTML standalone (Fernando/Lucía) ───────── */
+  const mEntry = MANIFEST.find(e => e.codigo === codigo)
+  const htmlFile = mEntry?.tablero_html
+  if (htmlFile) {
+    const base = import.meta.env.BASE_URL || '/'
+    const src = `${base}tableros/${htmlFile}`
+    return (
+      <div className="tablero" style={{ display: 'flex', flexDirection: 'column' }}>
+        <header className="t-header" style={{ flexShrink: 0 }}>
+          <Link to="/" className="t-back" title="Volver a emprendimientos">←</Link>
+          <div className="t-logo">{codigo}</div>
+          <div className="t-titles">
+            <div className="t-title-main">{emp?.nombre_full || emp?.nombre || codigo}</div>
+            <div className="t-title-sub">{[emp?.ubicacion, emp?.ciudad, emp?.provincia].filter(Boolean).join(', ')}</div>
+          </div>
+          <div className="t-spacer" />
+          <button className="t-logout" onClick={logout}>Salir</button>
+        </header>
+        <iframe src={src} style={{ flex: 1, border: 'none', width: '100%', minHeight: 0 }} title={`Tablero ${codigo}`} />
+      </div>
+    )
+  }
+
   const hasComercial = lots.some(l => l.estadoRaw)
 
   return (

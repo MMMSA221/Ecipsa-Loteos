@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>N73 · Nuevo Maipú — Tablero de Stock y Obra</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #363b48;
+  --surface:  #3f4453;
+  --surface2: #474d5f;
+  --surface3: #50566a;
+  --border:   #585f75;
+  --border2:  #626a82;
+  --accent:   #5a9cf8;
+  --text:     #eaecf4;
+  --text2:    #b8bfd4;
+  --text3:    #8b93ab;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); height:100vh; display:flex; flex-direction:column; overflow:hidden; }
+
+/* ── HEADER ──────────────────────────────────── */
+header {
+  padding:8px 18px;
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:14px;
+  flex-shrink:0;
+}
+.logo { background:linear-gradient(135deg,#4f8ef7,#9b8fef); color:#fff; font-family:'DM Mono',monospace; font-size:11px; font-weight:500; padding:4px 10px; border-radius:6px; letter-spacing:.05em; flex-shrink:0; }
+.header-titles { display:flex; flex-direction:column; gap:1px; }
+.header-main { font-size:13px; font-weight:600; color:var(--text); line-height:1.2; }
+.header-sub  { font-size:10px; font-weight:400; color:var(--text3); letter-spacing:.03em; }
+
+/* ── KPI BAR ─────────────────────────────────── */
+.kpi-bar {
+  display:flex; align-items:stretch;
+  background:transparent;
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+.kpi-bar-spacer { flex:1; }
+.kpi-group {
+  display:flex; gap:1px;
+  background:var(--border);
+}
+.kpi {
+  padding:9px 20px;
+  background:var(--surface);
+  display:flex; flex-direction:column; gap:2px;
+  min-width:160px;
+}
+.kpi-label { font-size:9px; text-transform:uppercase; letter-spacing:.09em; color:var(--text3); font-weight:600; }
+.kpi-top   { display:flex; align-items:baseline; gap:8px; }
+.kpi-q     { font-family:'DM Mono',monospace; font-size:21px; font-weight:500; line-height:1; }
+.kpi-usd   { font-family:'DM Mono',monospace; font-size:11px; color:var(--text2); }
+.kpi-sub   { font-size:9px; color:var(--text3); }
+
+/* ── MAIN ────────────────────────────────────── */
+.main { display:flex; flex:1; overflow:hidden; }
+
+/* ── SIDEBAR ─────────────────────────────────── */
+.sidebar { width:210px; background:var(--surface); border-right:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; flex-shrink:0; }
+.sb-scroll { overflow-y:auto; padding:13px 11px; flex:1; }
+
+.sec-lbl { font-size:9px; text-transform:uppercase; letter-spacing:.09em; color:var(--text3); font-weight:600; margin-bottom:6px; margin-top:13px; }
+.sec-lbl:first-child { margin-top:0; }
+.sec-lbl span { font-weight:400; text-transform:none; letter-spacing:0; font-size:8px; }
+
+/* Mode tabs */
+.mode-tabs { display:flex; background:var(--surface2); border:1px solid var(--border); border-radius:7px; padding:3px; gap:2px; margin-bottom:12px; }
+.mode-tab { flex:1; padding:5px 3px; text-align:center; font-size:9.5px; font-weight:500; color:var(--text3); cursor:pointer; border-radius:5px; transition:all .15s; line-height:1.3; border:1px solid transparent; }
+.mode-tab.active { background:var(--surface3); color:var(--text); border-color:var(--border2); }
+
+/* Legend */
+.legend { display:flex; flex-direction:column; gap:3px; }
+.leg-item { display:flex; align-items:center; gap:7px; padding:4px 6px; border-radius:5px; cursor:pointer; font-size:11px; color:var(--text2); transition:background .1s; border:1px solid transparent; user-select:none; }
+.leg-item:hover { background:var(--surface2); }
+.leg-item.on { background:var(--surface3); border-color:var(--border2); color:var(--text); }
+.leg-dot { width:9px; height:9px; border-radius:2px; flex-shrink:0; }
+.leg-count { margin-left:auto; font-family:'DM Mono',monospace; font-size:10px; color:var(--text3); }
+
+/* Filters section */
+.flt { margin-bottom:7px; }
+.flt-lbl { font-size:9px; color:var(--text3); text-transform:uppercase; letter-spacing:.07em; margin-bottom:3px; }
+
+/* Native selects for dropdowns */
+select.flt-drop {
+  width:100%; background:var(--surface2); border:1px solid var(--border);
+  color:var(--text); padding:6px 8px; border-radius:6px;
+  font-family:'DM Sans',sans-serif; font-size:11px;
+  cursor:pointer; outline:none; transition:border-color .15s;
+  appearance:none;
+}
+select.flt-drop:hover, select.flt-drop:focus { border-color:var(--accent); }
+select.flt-drop option { background:var(--surface2); }
+
+/* Multi-select list */
+select.flt-multi {
+  width:100%; background:var(--surface2); border:1px solid var(--border);
+  color:var(--text); border-radius:6px;
+  font-family:'DM Sans',sans-serif; font-size:11px;
+  cursor:pointer; outline:none; transition:border-color .15s;
+}
+select.flt-multi option { padding:4px 8px; }
+select.flt-multi:hover, select.flt-multi:focus { border-color:var(--accent); }
+select.flt-multi option { background:var(--surface2); }
+select.flt-multi option:checked { background:var(--surface3); }
+
+.reset-btn { width:100%; margin-top:6px; padding:7px; background:transparent; border:1px solid var(--border); color:var(--text2); border-radius:6px; font-family:'DM Sans',sans-serif; font-size:11px; cursor:pointer; transition:all .15s; }
+.reset-btn:hover { border-color:var(--accent); color:var(--accent); }
+
+/* ── MAP ─────────────────────────────────────── */
+.map-wrap { flex:1; position:relative; overflow:hidden; background:#272b35; cursor:grab; }
+.map-wrap:active { cursor:grabbing; }
+#map-svg { position:absolute; top:0; left:0; transform-origin:0 0; user-select:none; }
+
+.lot-poly { stroke:#272b35; stroke-width:0.5; cursor:pointer; }
+.lot-poly.dimmed { opacity:.07 !important; pointer-events:none; }
+.lot-poly.sel { stroke:#fff !important; stroke-width:1.8 !important; filter:brightness(1.3); }
+.lot-poly:not(.dimmed):not(.sel):hover { filter:brightness(1.4); stroke:rgba(255,255,255,.6) !important; stroke-width:0.9 !important; }
+
+.mzn-poly { fill:none; stroke:#626a82; stroke-width:1.2; pointer-events:none; }
+.mzn-lbl  { font-family:'DM Sans',sans-serif; font-size:9px; font-weight:600; fill:rgba(255,255,255,.13); pointer-events:none; text-anchor:middle; dominant-baseline:middle; }
+.lot-lbl  { font-family:'DM Mono',monospace; font-size:3.2px; fill:rgba(255,255,255,.45); pointer-events:none; text-anchor:middle; dominant-baseline:middle; }
+
+.zoom-ctrls { position:absolute; bottom:15px; right:15px; display:flex; flex-direction:column; gap:4px; z-index:10; }
+.zoom-btn   { width:34px; height:34px; background:var(--surface); border:1px solid var(--border); color:var(--text); border-radius:7px; font-size:17px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background .15s; }
+.zoom-btn:hover { background:var(--surface2); }
+.fit-btn { position:absolute; bottom:15px; right:57px; height:34px; padding:0 11px; background:var(--surface); border:1px solid var(--border); color:var(--text2); border-radius:7px; font-size:10px; cursor:pointer; font-family:'DM Sans',sans-serif; display:flex; align-items:center; z-index:10; transition:background .15s; white-space:nowrap; }
+.fit-btn:hover { background:var(--surface2); }
+
+/* Brújula Norte */
+.compass { position:absolute; top:14px; right:14px; width:44px; height:44px; z-index:10; pointer-events:none; }
+
+/* Botón Ampliar mapa */
+.expand-btn { position:absolute; bottom:15px; right:100px; height:34px; padding:0 11px; background:var(--surface); border:1px solid var(--border); color:var(--text2); border-radius:7px; font-size:10px; cursor:pointer; font-family:'DM Sans',sans-serif; display:flex; align-items:center; z-index:10; transition:background .15s; white-space:nowrap; gap:5px; pointer-events:all; }
+.expand-btn:hover { background:var(--surface2); color:var(--text); }
+
+/* Modo pantalla completa del mapa */
+body.map-expanded .sidebar,
+body.map-expanded .detail,
+body.map-expanded header,
+body.map-expanded .kpi-bar { display:none !important; }
+body.map-expanded .main { position:fixed; inset:0; z-index:100; }
+body.map-expanded .map-wrap { width:100vw !important; height:100vh !important; }
+body.map-expanded .expand-btn { bottom:15px; right:100px; }
+body.map-expanded .expand-lbl::before { content:'✕  Cerrar'; }
+.expand-lbl::before { content:'⛶  Ampliar mapa'; }
+
+/* ── DETAIL PANEL ────────────────────────────── */
+.detail {
+  width:0; min-width:0; overflow:hidden;
+  background:var(--surface); border-left:0px solid var(--border);
+  display:flex; flex-direction:column; flex-shrink:0;
+  transition:width .22s cubic-bezier(.4,0,.2,1), border-left-width .22s;
+}
+.detail.open { width:268px; border-left-width:1px; overflow:visible; }
+.det-hdr, .det-body { min-width:268px; }
+.det-hdr { padding:13px 15px 11px; border-bottom:1px solid var(--border); }
+.det-pre  { font-size:9px; text-transform:uppercase; letter-spacing:.08em; color:var(--text3); margin-bottom:3px; }
+.det-name { font-size:13px; font-weight:500; color:var(--text); line-height:1.3; }
+.det-badge { display:inline-flex; align-items:center; gap:5px; margin-top:7px; padding:3px 9px; border-radius:20px; font-size:10px; font-weight:500; }
+.det-body  { padding:11px 15px; overflow-y:auto; flex:1; }
+.det-grp   { margin-bottom:13px; }
+.det-grp-ttl { font-size:9px; text-transform:uppercase; letter-spacing:.07em; color:var(--text3); margin-bottom:6px; padding-bottom:3px; border-bottom:1px solid var(--border); }
+.det-row   { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:5px; gap:8px; }
+.det-k     { font-size:11px; color:var(--text2); flex-shrink:0; }
+.det-v     { font-size:11px; color:var(--text); text-align:right; font-weight:500; }
+.det-v.mono { font-family:'DM Mono',monospace; color:var(--accent); font-size:12px; }
+.det-empty { padding:40px 15px; text-align:center; color:var(--text3); font-size:12px; line-height:1.8; }
+
+::-webkit-scrollbar { width:3px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">N73</div>
+  <div class="header-titles">
+    <div class="header-main">N73 Nuevo Maipú · Tablero de Stock y Obra</div>
+    <div class="header-sub">Mendoza, Argentina</div>
+  </div>
+</header>
+
+<!-- KPI BAR -->
+<div class="kpi-bar">
+  <div class="kpi-bar-spacer"></div>
+  <div class="kpi-group">
+    <div class="kpi">
+      <div class="kpi-label">Total Stock</div>
+      <div class="kpi-top">
+        <div class="kpi-q" id="kpi-total-q" style="color:#5a9cf8">—</div>
+        <div class="kpi-usd" id="kpi-total-usd">USD —</div>
+      </div>
+      <div class="kpi-sub">unidades visibles</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Disponibles</div>
+      <div class="kpi-top">
+        <div class="kpi-q" id="kpi-disp-q" style="color:#22d3a0">—</div>
+        <div class="kpi-usd" id="kpi-disp-usd">USD —</div>
+      </div>
+      <div class="kpi-sub">para la venta</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Adjudicados</div>
+      <div class="kpi-top">
+        <div class="kpi-q" id="kpi-adj-q" style="color:#f5a623">—</div>
+        <div class="kpi-usd" id="kpi-adj-usd">USD —</div>
+      </div>
+      <div class="kpi-sub">adj. + reservados</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Entregados</div>
+      <div class="kpi-top">
+        <div class="kpi-q" id="kpi-ent-q" style="color:#7dd3fc">—</div>
+        <div class="kpi-usd" id="kpi-ent-usd">USD —</div>
+      </div>
+      <div class="kpi-sub">entregados + escrit.</div>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+<div class="sb-scroll">
+
+  <div class="sec-lbl">Vista de color</div>
+  <div class="mode-tabs">
+    <div class="mode-tab active" data-mode="estado">Por Estado</div>
+    <div class="mode-tab" data-mode="tipo">Por Tipo Producto</div>
+    <div class="mode-tab" data-mode="estilo">Por Estilo Casa</div>
+  </div>
+
+  <div class="sec-lbl">Leyenda <span>(Ctrl+clic = múltiple)</span></div>
+  <div class="legend" id="legend"></div>
+
+  <div class="sec-lbl">Tipo de Inmueble <span>(Ctrl+clic)</span></div>
+  <select id="f-tipo" class="flt-multi" multiple size="4">
+    <option value="Casa">Casa</option>
+    <option value="Casa Futura">Casa Futura</option>
+    <option value="Lote">Lote</option>
+    <option value="Macrolote">Macrolote</option>
+  </select>
+
+  <div class="sec-lbl">Filtros</div>
+
+  <div class="flt">
+    <div class="flt-lbl">Negocio Comercial</div>
+    <select id="f-negocio" class="flt-drop">
+      <option value="">Todos</option>
+    </select>
+  </div>
+
+  <div class="flt">
+    <div class="flt-lbl">Etapa</div>
+    <select id="f-etapa" class="flt-drop">
+      <option value="">Todas</option>
+    </select>
+  </div>
+
+  <div class="flt">
+    <div class="flt-lbl">Avance de Obra</div>
+    <select id="f-avance" class="flt-drop">
+      <option value="">Todos</option>
+    </select>
+  </div>
+
+  <div class="flt">
+    <div class="flt-lbl">Manzana</div>
+    <select id="f-manzana" class="flt-drop">
+      <option value="">Todas</option>
+      <option>A</option><option>B</option><option>C</option><option>D</option>
+      <option>E</option><option>F</option><option>G</option>
+    </select>
+  </div>
+
+  <button class="reset-btn" id="reset-btn">↺ Limpiar todo</button>
+
+</div>
+</div>
+
+<!-- MAP -->
+<div class="map-wrap" id="map-wrap">
+  <svg id="map-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+
+  <!-- Brújula Norte -->
+  <svg class="compass" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="22" cy="22" r="20" fill="rgba(40,44,56,0.75)" stroke="#585f75" stroke-width="1"/>
+    <!-- flecha norte (roja) -->
+    <polygon points="22,5 18,22 22,19 26,22" fill="#e05555"/>
+    <!-- flecha sur (gris) -->
+    <polygon points="22,39 26,22 22,25 18,22" fill="#8b93ab"/>
+    <!-- punto central -->
+    <circle cx="22" cy="22" r="2.5" fill="#eaecf4"/>
+    <!-- letra N -->
+    <text x="22" y="4" text-anchor="middle" dominant-baseline="auto" font-family="DM Sans,sans-serif" font-size="7" font-weight="700" fill="#e05555" letter-spacing="0">N</text>
+  </svg>
+
+  <div class="zoom-ctrls">
+    <button class="zoom-btn" id="zin">+</button>
+    <button class="zoom-btn" id="zout">−</button>
+  </div>
+  <button class="fit-btn" id="fit-btn">⊡ Ajustar</button>
+  <button class="expand-btn" id="expand-btn"><span class="expand-lbl"></span></button>
+</div>
+
+<!-- DETAIL -->
+<div class="detail" id="detail-panel">
+  <div class="det-hdr">
+    <div class="det-pre">Producto seleccionado</div>
+    <div class="det-name" id="det-name">—</div>
+    <div class="det-badge" id="det-badge" style="display:none"></div>
+  </div>
+  <div class="det-body" id="det-body">
+    <div class="det-empty">Hacé clic en un lote<br>para ver sus detalles</div>
+  </div>
+</div>
+
+</div><!-- .main -->
+
+<script>
+const RAW_DATA = {"lots":[{"manzana":"A","lote":"1","pts":[[2525805.258739402,6352179.918528374],[2525817.195917795,6352177.074670871],[2525822.772909986,6352201.654741263],[2525811.099603961,6352204.43573505]],"cx":2525814.081792786,"cy":6352190.77091889,"nombre":"Lote 1 - Mza A - Natania 73- Nuevo Maipu","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa Futura","estilo":"Futura Plus","m2_terreno":"301.82","m2_construido":"53.95","avance_obra":"En Construccion","fecha_entrega":"2026-05-01","costo":"59682.84","etapa":"Nuevo Maipu - Etapa II","dormitorios":"2"},{"manzana":"A","lote":"10","pts":[[2525707.35543749,6352178.261268901],[2525704.150605228,6352166.696898464],[2525730.264677627,6352159.657398519],[2525733.387978338,6352171.243747197]],"cx":2525718.789674671,"cy":6352168.9648282705,"nombre":"Lote 10 - Mza A - Natania 73- Nuevo Maipu","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"324.05","m2_construido":"58.0","avance_obra":"En Construccion","fecha_entrega":"2026-05-01","costo":"62056.25","etapa":"Nuevo Maipu - Etapa II","dormitorios":"2"},{"manzana":"A","lote":"11","pts":[[2525704.150605228,6352166.696898464],[2525700.945772968,6352155.132528026],[2525727.141376917,6352148.071049843],[2525730.264677553,6352159.65739854]],"cx":2525715.625608166,"cy":6352157.389468718,"nombre":"Lote 11 - Mza A - Natania 73- Nuevo Maipu","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"325.06","m2_construido":"58.0","avance_obra":"En Construccion","fecha_entrega":"2026-05-01","costo":"62103.89","etapa":"Nuevo Maipu - Etapa II","dormitorios":"2"},{"manzana":"A","lote":"12","pts":[[2525727.141376798,6352148.071049874],[2525724.018076206,6352136.484701165],[2525697.740940707,6352143.568157589],[2525700.945775848,6352155.13252725]],"cx":2525712.46154239,"cy":6352145.81410897,"nombre":"Lote 12 - Mza A - Natania 73- Nuevo Maipu","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"326.07","m2_construido":"58.0","avance_obra":"En Construccion","fecha_entrega":"2026-05-01","costo":"62151.52","etapa":"Nuevo Maipu - Etapa II","dormitorios":"2"},{"manzana":"A","lote":"13","pts":[[2525697.741102275,6352143.568729421],[2525694.536108446,6352132.003787153],[2525720.894775496,6352124.898352488],[2525724.015938473,6352136.476770928]],"cx":2525709.2969811726,"cy":6352134.236909999,"nombre":"Lote 13 - Mza A - Natania 73- Nuevo Maipu","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"327.09","m2_construido":"58.0","avance_obra":"En Construccion","fecha_entrega":"2026-05-01","costo":"62199.62","etapa":"Nuevo Maipu - Etapa II","dormitorios":"2"},{"manzana":"A","lote":"14","pts":[[2525691.331279065,6352120.439415937],[2525717.771474678,6352113.312004408],[2525720.894775496,6352124.898352488],[2525694.536111326,6352132.003786375]],"cx":2525706.1334101413,"cy":6352122.663389802,"nombre":"Lote 14 - Mza A - Natania 73- Nuevo Maipu","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"328.1","m2_construido":"68.0","avance_obra":"En Construccion","fecha_entrega":"2026-05-01","costo":"67852.67","etapa":"Nuevo Maipu - Etapa II","dormitorios":"3"},{"manzana":"A","lote":"15","pts":[[2525691.331276186,6352120.439416714],[2525688.126443924,6352108.875046277],[2525714.648174057,6352101.725655137],[2525717.771474535,6352113.312003877]],"cx":2525702.9693421754,"cy":6352111.088030501,"nombre":"Lote 15 - Mza A - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"329.11","m2_construido":"329.11","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"15520.79","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"A","lote":"16","pts":[[2525688.126446805,6352108.875045501],[2525684.921614544,6352097.310675064],[2525711.524873027,6352090.139306548],[2525714.642264355,6352101.703732216]],"cx":2525699.8037996828,"cy":6352099.507189832,"nombre":"Lote 16 - Mza A - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"330.13","m2_construido":"330.13","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"15568.89","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"A","lote":"17","pts":[[2525684.921614544,6352097.310675064],[2525681.716779402,6352085.746305402],[2525708.401572272,6352078.552957882],[2525711.524873366,6352090.139306457]],"cx":2525696.641209896,"cy":6352087.937311201,"nombre":"Lote 17 - Mza A - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"331.14","m2_construido":"331.14","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"15616.53","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"A","lote":"18","pts":[[2525681.716779402,6352085.746305402],[2525678.511947142,6352074.181934964],[2525705.278271517,6352066.966609217],[2525708.401572656,6352078.552957778]],"cx":2525693.477142679,"cy":6352076.36195184,"nombre":"Lote 18 - Mza A - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"332.15","m2_construido":"332.15","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"15664.16","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"A","lote":"19","pts":[[2525678.511950022,6352074.181934187],[2525675.30711488,6352062.617564527],[2525702.154971235,6352055.380260424],[2525705.281185627,6352066.977419539]],"cx":2525690.313805441,"cy":6352064.789294669,"nombre":"Lote 19 - Mza A - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"333.17","m2_construido":"333.17","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"15712.26","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"A","lote":"2","pts":[[2525805.258739402,6352179.918528374],[2525793.585433377,6352182.699522162],[2525799.42629793,6352207.216728834],[2525811.099603959,6352204.435735046]],"cx":2525802.342518667,"cy":6352193.567628604,"nombre":"Lote 2 - Mza A - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa Futura","estilo":"Futura Plus","m2_terreno":"302.44","m2_construido":"53.95","avance_obra":"En Construccion","fecha_entrega":"2026-05-01","costo":"59712.08","etapa":"Nuevo Maipu - Etapa II","dormitorios":"2"},{"manzana":"A","lote":"20","pts":[[2525675.307117761,6352062.617563749],[2525672.102282619,6352051.053194089],[2525699.031670524,6352043.793911746],[2525702.157684689,6352055.390326385]],"cx":2525687.149688898,"cy":6352053.213748992,"nombre":"Lote 20 - Mza A - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"334.18","m2_construido":"334.18","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"15759.89","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"A","lote":"21","pts":[[2525672.102285499,6352051.053193312],[2525668.897450358,6352039.488823652],[2525695.908369805,6352032.207563071],[2525699.031670524,6352043.793911746]],"cx":2525683.9849440465,"cy":6352041.635872945,"nombre":"Lote 21 - Mza A - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"335.19","m2_construido":"335.19","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"15807.52","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"A","lote":"22","pts":[[2525668.897453239,6352039.488822875],[2525665.692620977,6352027.924452437],[2525692.785068471,6352020.62121445],[2525695.90836921,6352032.207563231]],"cx":2525680.8208779744,"cy":6352030.060513249,"nombre":"Lote 22 - Mza A - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"336.21","m2_construido":"336.21","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"15855.63","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"A","lote":"23","pts":[[2525665.692620977,6352027.924452437],[2525662.487785836,6352016.360082777],[2525689.661767745,6352009.034865891],[2525692.785069076,6352020.621214287]],"cx":2525677.6568109086,"cy":6352018.485153848,"nombre":"Lote 23 - Mza A - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"337.22","m2_construido":"337.22","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"15903.26","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"A","lote":"24","pts":[[2525662.487785836,6352016.360082777],[2525659.282953576,6352004.79571234],[2525686.538467684,6351997.448517038],[2525689.663835749,6352009.042537458]],"cx":2525674.4932607114,"cy":6352006.9117124025,"nombre":"Lote 24 - Mza A - Natania 73- Nuevo Maipu","estado":"Escriturado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"338.23","m2_construido":"338.23","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"15950.89","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"A","lote":"25","pts":[[2525659.282956456,6352004.795711563],[2525656.078121314,6351993.231341902],[2525683.415166208,6351985.862168454],[2525686.538467684,6351997.448517038]],"cx":2525671.328677915,"cy":6351995.334434738,"nombre":"Lote 25 - Mza A - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"339.25","m2_construido":"339.25","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"15998.99","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"A","lote":"26","pts":[[2525656.078124194,6351993.231341126],[2525652.873275053,6351981.666909774],[2525680.291849002,6351974.27575876],[2525683.41632315,6351985.866460303]],"cx":2525668.1648928495,"cy":6351983.76011749,"nombre":"Lote 26 - Mza A - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"340.26","m2_construido":"340.26","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"16046.62","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"A","lote":"27","pts":[[2525652.873275053,6351981.666909774],[2525649.444447291,6351969.294270218],[2525677.167565021,6351962.68576267],[2525680.291848986,6351974.275758877]],"cx":2525664.944284088,"cy":6351971.980675384,"nombre":"Lote 27 - Mza A - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"353.27","m2_construido":"353.27","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"16660.17","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"A","lote":"3","pts":[[2525799.42629793,6352207.216728834],[2525787.752991909,6352209.997722622],[2525781.912127354,6352185.480515946],[2525793.585433377,6352182.69952216]],"cx":2525790.6692126426,"cy":6352196.348622391,"nombre":"Lote 3 - Mza A - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa Futura","estilo":"Futura Plus","m2_terreno":"302.44","m2_construido":"53.95","avance_obra":"En Construccion","fecha_entrega":"2026-05-01","costo":"59712.08","etapa":"Nuevo Maipu - Etapa II","dormitorios":"2"},{"manzana":"A","lote":"4","pts":[[2525781.912127354,6352185.480515948],[2525770.238821327,6352188.261509732],[2525776.079685883,6352212.778716403],[2525787.752991909,6352209.997722622]],"cx":2525778.9959066184,"cy":6352199.129616177,"nombre":"Lote 4 - Mza A - Natania 73- Nuevo Maipu","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa Futura","estilo":"Futura Plus","m2_terreno":"302.44","m2_construido":"53.95","avance_obra":"En Construccion","fecha_entrega":"2026-05-01","costo":"59712.08","etapa":"Nuevo Maipu - Etapa II","dormitorios":"2"},{"manzana":"A","lote":"5","pts":[[2525770.238821327,6352188.261509734],[2525758.565515302,6352191.042503521],[2525764.40637986,6352215.559710194],[2525776.079685883,6352212.778716403]],"cx":2525767.3226005933,"cy":6352201.910609963,"nombre":"Lote 5 - Mza A - Natania 73- Nuevo Maipu","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa Futura","estilo":"Futura Plus","m2_terreno":"302.44","m2_construido":"53.95","avance_obra":"En Construccion","fecha_entrega":"2026-05-01","costo":"59712.08","etapa":"Nuevo Maipu - Etapa II","dormitorios":"2"},{"manzana":"A","lote":"6","pts":[[2525755.348436978,6352191.808925201],[2525758.565515308,6352191.04250352],[2525764.406379877,6352215.55971019],[2525745.7036411692,6352220.015363105],[2525746.541314116,6352199.802625101]],"cx":2525754.1130574895,"cy":6352203.645825423,"nombre":"Lote 6 - Mza A - Natania 73- Nuevo Maipu","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa Futura","estilo":"Futura Plus","m2_terreno":"357.3","m2_construido":"53.95","avance_obra":"En Construccion","fecha_entrega":"2026-05-01","costo":"62299.27","etapa":"Nuevo Maipu - Etapa II","dormitorios":"2"},{"manzana":"A","lote":"7","pts":[[2525746.5413141097,6352199.802625106],[2525745.7036411637,6352220.015363106],[2525720.585124212,6352225.999481003],[2525735.0643197824,6352196.57945352]],"cx":2525736.9735998167,"cy":6352210.599230683,"nombre":"Lote 7 - Mza A - Natania 73- Nuevo Maipu","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"431.09","m2_construido":"58.0","avance_obra":"En Construccion","fecha_entrega":"2026-05-01","costo":"67104.25","etapa":"Nuevo Maipu - Etapa II","dormitorios":"2"},{"manzana":"A","lote":"8","pts":[[2525735.0643197796,6352196.579453511],[2525720.5851242095,6352225.999480994],[2525713.0235076454,6352198.714017064],[2525732.3575887503,6352183.111623197]],"cx":2525725.257635096,"cy":6352201.101143692,"nombre":"Lote 8 - Mza A - Natania 73- Nuevo Maipu","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"440.51","m2_construido":"68.0","avance_obra":"En Construccion","fecha_entrega":"2026-05-01","costo":"73153.91","etapa":"Nuevo Maipu - Etapa II","dormitorios":"3"},{"manzana":"A","lote":"9","pts":[[2525735.414001244,6352178.759580603],[2525732.357588752,6352183.111623206],[2525713.023507647,6352198.714017074],[2525707.35543749,6352178.261268901],[2525733.387978337,6352171.243747196],[2525735.414001243,6352178.759580603]],"cx":2525726.158752452,"cy":6352181.474969598,"nombre":"Lote 9 - Mza A - Natania 73- Nuevo Maipu","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"407.66","m2_construido":"68.0","avance_obra":"En Construccion","fecha_entrega":"2026-05-01","costo":"71604.71","etapa":"Nuevo Maipu - Etapa II","dormitorios":"3"},{"manzana":"A","lote":"Macrolote A","pts":[[2525828.857843451,6352228.473529939],[2525822.772909986,6352201.654741263],[2525720.585124212,6352225.999481004],[2525731.309378293,6352264.69705915],[2525825.541023673,6352239.559745465],[2525828.857843451,6352228.473529939]],"cx":2525792.987353844,"cy":6352231.476347794,"nombre":"Macrolote A - Mza A - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Macrolote","estilo":"","m2_terreno":"3999.26","m2_construido":"","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"94944.16","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"B","lote":"1","pts":[[2525846.055727849,6352195.805274397],[2525840.513983895,6352171.38057436],[2525852.732903361,6352168.469596181],[2525858.543528541,6352192.859872144]],"cx":2525849.461535911,"cy":6352182.128829271,"nombre":"Lote 1 - Mza B - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"312.67","m2_construido":"68.0","avance_obra":"Pozo","fecha_entrega":"2027-10-01","costo":"81414.03","etapa":"Nuevo Maipu - Etapa III","dormitorios":"3"},{"manzana":"B","lote":"10","pts":[[2525956.115680824,6352169.614739295],[2525968.31219968,6352166.709097732],[2525962.532905126,6352142.450332252],[2525950.336385927,6352145.355973923]],"cx":2525959.3242928893,"cy":6352156.032535801,"nombre":"Lote 10 - Mza B - Natania 73- Nuevo Maipu","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"312.67","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"2027-10-01","costo":"73496.67","etapa":"Nuevo Maipu - Etapa III","dormitorios":"2"},{"manzana":"B","lote":"11","pts":[[2525968.312199865,6352166.709097717],[2525980.508718722,6352163.803456154],[2525974.729272321,6352139.544080048],[2525962.532905136,6352142.450332278]],"cx":2525971.520774011,"cy":6352153.126741549,"nombre":"Lote 11 - Mza B - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"312.67","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"2027-10-01","costo":"73496.67","etapa":"Nuevo Maipu - Etapa III","dormitorios":"2"},{"manzana":"B","lote":"12","pts":[[2525980.508718717,6352163.803456134],[2525992.705237575,6352160.897814569],[2525987.261030509,6352136.559219442],[2525974.730942139,6352139.543682325]],"cx":2525983.801482235,"cy":6352150.201043118,"nombre":"Lote 12 - Mza B - Natania 73- Nuevo Maipu","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"312.67","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"2027-10-01","costo":"73496.67","etapa":"Nuevo Maipu - Etapa III","dormitorios":"2"},{"manzana":"B","lote":"2","pts":[[2525858.543528715,6352192.859872103],[2525870.740047572,6352189.95423054],[2525864.932031686,6352165.574907165],[2525852.735512654,6352168.48054877]],"cx":2525861.7377801565,"cy":6352179.217389644,"nombre":"Lote 2 - Mza B - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"312.67","m2_construido":"68.0","avance_obra":"Pozo","fecha_entrega":"2027-10-01","costo":"81414.03","etapa":"Nuevo Maipu - Etapa III","dormitorios":"3"},{"manzana":"B","lote":"3","pts":[[2525870.740047572,6352189.954230543],[2525882.936566429,6352187.048588979],[2525877.128550543,6352162.669265604],[2525864.932031512,6352165.574907209]],"cx":2525873.934299014,"cy":6352176.311748085,"nombre":"Lote 3 - Mza B - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"312.67","m2_construido":"68.0","avance_obra":"Pozo","fecha_entrega":"2027-10-01","costo":"81414.03","etapa":"Nuevo Maipu - Etapa III","dormitorios":"3"},{"manzana":"B","lote":"4","pts":[[2525882.936566429,6352187.048588977],[2525895.133085286,6352184.142947415],[2525889.3250694,6352159.763624039],[2525877.128550368,6352162.669265643]],"cx":2525886.1308178706,"cy":6352173.406106519,"nombre":"Lote 4 - Mza B - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"312.67","m2_construido":"68.0","avance_obra":"Pozo","fecha_entrega":"2027-10-01","costo":"81414.03","etapa":"Nuevo Maipu - Etapa III","dormitorios":"3"},{"manzana":"B","lote":"5","pts":[[2525895.133085288,6352184.142947423],[2525907.329604144,6352181.237305858],[2525901.521588259,6352156.857982484],[2525889.325069227,6352159.763624087]],"cx":2525898.3273367295,"cy":6352170.500464963,"nombre":"Lote 5 - Mza B - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"312.67","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"2027-10-01","costo":"73496.67","etapa":"Nuevo Maipu - Etapa III","dormitorios":"2"},{"manzana":"B","lote":"6","pts":[[2525907.329604143,6352181.237305851],[2525919.526123001,6352178.331664288],[2525913.718107115,6352153.952340914],[2525901.521588083,6352156.857982517]],"cx":2525910.5238555856,"cy":6352167.594823392,"nombre":"Lote 6 - Mza B - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"312.67","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"2027-10-01","costo":"73496.67","etapa":"Nuevo Maipu - Etapa III","dormitorios":"2"},{"manzana":"B","lote":"7","pts":[[2525919.526123004,6352178.3316643],[2525931.722641861,6352175.426022736],[2525925.914625975,6352151.046699361],[2525913.718106943,6352153.952340966]],"cx":2525922.7203744454,"cy":6352164.68918184,"nombre":"Lote 7 - Mza B - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"312.67","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"2027-10-01","costo":"73496.67","etapa":"Nuevo Maipu - Etapa III","dormitorios":"2"},{"manzana":"B","lote":"8","pts":[[2525931.722642754,6352175.426022528],[2525943.919161611,6352172.520380963],[2525938.111145725,6352148.141057589],[2525925.914626693,6352151.046699193]],"cx":2525934.916894196,"cy":6352161.783540068,"nombre":"Lote 8 - Mza B - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"312.67","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"2027-10-01","costo":"73496.67","etapa":"Nuevo Maipu - Etapa III","dormitorios":"2"},{"manzana":"B","lote":"9","pts":[[2525943.919161611,6352172.520380963],[2525956.115680468,6352169.614739399],[2525950.336385746,6352145.355973986],[2525938.111145551,6352148.141057629]],"cx":2525947.120593344,"cy":6352158.908037994,"nombre":"Lote 9 - Mza B - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"312.67","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"2027-10-01","costo":"73496.67","etapa":"Nuevo Maipu - Etapa III","dormitorios":"2"},{"manzana":"B","lote":"Macrolote B","pts":[[2525859.454487902,6352230.512960975],[2525999.854343302,6352193.0597764],[2525992.686797636,6352160.902207636],[2525846.06209994,6352195.833389268],[2525852.255279466,6352223.158865045],[2525859.454487899,6352230.51296097]],"cx":2525901.627916024,"cy":6352205.663360049,"nombre":"Macrolote B - Mza B - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Macrolote","estilo":"","m2_terreno":"5234.45","m2_construido":"","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"124268.11","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"C","lote":"1","pts":[[2526024.287558705,6352173.974595908],[2526026.931473533,6352185.836658163],[2526051.220174495,6352179.357383684],[2526048.033029818,6352167.640233883]],"cx":2526037.618059138,"cy":6352176.7022179095,"nombre":"Lote 1 - Mza C - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"297.68","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"72789.74","etapa":"Nuevo Maipu - Etapa VII","dormitorios":"2"},{"manzana":"C","lote":"10","pts":[[2525996.998254005,6352051.539702122],[2526000.432258325,6352066.94654223],[2526019.273623096,6352061.920403776],[2526015.136749926,6352046.701061558]],"cx":2526007.960221338,"cy":6352056.776927422,"nombre":"Lote 10 - Mza C - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"302.0","m2_construido":"","avance_obra":"Terminado","fecha_entrega":"","costo":"14242.29","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"C","lote":"11","pts":[[2525993.425150825,6352035.508787698],[2525996.998254005,6352051.539702122],[2526015.136749926,6352046.701061558],[2526010.827298995,6352030.866575884]],"cx":2526004.0968634374,"cy":6352041.154031815,"nombre":"Lote 11 - Mza C - Natania 73- Nuevo Maipu","estado":"Adjudicado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"302.0","m2_construido":"","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"14242.29","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"C","lote":"12","pts":[[2525989.694537668,6352018.771196517],[2525993.425150825,6352035.508787698],[2526010.827298995,6352030.866575884],[2526006.330440938,6352014.333388845]],"cx":2526000.0693571065,"cy":6352024.869987236,"nombre":"Lote 12 - Mza C - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"301.83","m2_construido":"","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"14234.27","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"C","lote":"13","pts":[[2525985.783543644,6352001.224317136],[2525989.694537668,6352018.771196517],[2526006.332381346,6352014.33287122],[2526001.617818058,6351997.000352659]],"cx":2525995.8570701787,"cy":6352007.832184383,"nombre":"Lote 13 - Mza C - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"301.83","m2_construido":"","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"14234.27","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"C","lote":"14","pts":[[2525981.663160991,6351982.738004714],[2525985.783543644,6352001.224317136],[2526001.617818058,6351997.000352659],[2525996.650844275,6351978.739877605]],"cx":2525991.4288417418,"cy":6351989.925638028,"nombre":"Lote 14 - Mza C - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"301.83","m2_construido":"","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"14234.27","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"C","lote":"15","pts":[[2525977.295657886,6351963.142973447],[2525981.663160991,6351982.738004714],[2525996.650844275,6351978.739877605],[2525991.328627619,6351959.399526533]],"cx":2525986.734572693,"cy":6351971.005095575,"nombre":"Lote 15 - Mza C - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"301.83","m2_construido":"","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"14234.27","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"C","lote":"16","pts":[[2525972.63039313,6351942.212018955],[2525985.762165981,6351938.708976087],[2525991.385975633,6351959.384228329],[2525977.295657886,6351963.142973447]],"cx":2525981.7685481575,"cy":6351950.862049205,"nombre":"Lote 16 - Mza C - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"301.83","m2_construido":"","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"14234.27","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"C","lote":"17","pts":[[2525967.596629911,6351919.627776811],[2525972.63039313,6351942.212018955],[2525985.722451449,6351938.71957037],[2525979.763684376,6351916.382083039]],"cx":2525976.428289716,"cy":6351929.235362294,"nombre":"Lote 17 - Mza C - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"301.83","m2_construido":"","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"14234.27","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"C","lote":"18","pts":[[2525962.057256118,6351894.775086381],[2525973.096093192,6351892.143699867],[2525979.694144621,6351916.400633523],[2525967.596629911,6351919.627776811]],"cx":2525970.6110309605,"cy":6351905.736799145,"nombre":"Lote 18 - Mza C - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"301.83","m2_construido":"","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"14234.27","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"C","lote":"2","pts":[[2526021.581725404,6352161.834733191],[2526024.287558705,6352173.974595908],[2526048.033029818,6352167.640233883],[2526044.767060085,6352155.649793636]],"cx":2526034.667343503,"cy":6352164.774839154,"nombre":"Lote 2 - Mza C - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"301.83","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"72985.46","etapa":"Nuevo Maipu - Etapa VII","dormitorios":"2"},{"manzana":"C","lote":"3","pts":[[2526018.809408232,6352149.396587102],[2526021.581725405,6352161.834733191],[2526044.767060085,6352155.649793636],[2526041.42532609,6352143.363545665]],"cx":2526031.645879953,"cy":6352152.561164898,"nombre":"Lote 3 - Mza C - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"301.83","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"72985.46","etapa":"Nuevo Maipu - Etapa VII","dormitorios":"2"},{"manzana":"C","lote":"4","pts":[[2526038.001027574,6352130.758797679],[2526041.429315534,6352143.362481436],[2526018.809408233,6352149.396587102],[2526015.965451558,6352136.637026636]],"cx":2526028.551300725,"cy":6352140.038723214,"nombre":"Lote 4 - Mza C - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"301.83","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"72985.46","etapa":"Nuevo Maipu - Etapa VII","dormitorios":"2"},{"manzana":"C","lote":"5","pts":[[2526013.043996824,6352123.529767067],[2526015.965451558,6352136.637026636],[2526038.001027574,6352130.758797679],[2526034.479318475,6352117.811662475]],"cx":2526025.372448608,"cy":6352127.184313465,"nombre":"Lote 5 - Mza C - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"301.83","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"72985.46","etapa":"Nuevo Maipu - Etapa VII","dormitorios":"2"},{"manzana":"C","lote":"6","pts":[[2526010.038340569,6352110.044732976],[2526013.043996823,6352123.529767067],[2526034.479318475,6352117.811662475],[2526030.852735302,6352104.492267375]],"cx":2526022.1035977923,"cy":6352113.969607473,"nombre":"Lote 6 - Mza C - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"301.83","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"72985.46","etapa":"Nuevo Maipu - Etapa VII","dormitorios":"2"},{"manzana":"C","lote":"7","pts":[[2526006.940753323,6352096.147245677],[2526010.038340569,6352110.044732976],[2526030.852735302,6352104.492267375],[2526027.185935717,6352090.746623643]],"cx":2526018.7544412278,"cy":6352100.357717417,"nombre":"Lote 7 - Mza C - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"301.83","m2_construido":"68.0","avance_obra":"Pozo","fecha_entrega":"","costo":"80902.81","etapa":"Nuevo Maipu - Etapa VII","dormitorios":"3"},{"manzana":"C","lote":"8","pts":[[2526003.742245277,6352081.796971926],[2526006.940753324,6352096.147245677],[2526027.118922768,6352090.764500074],[2526023.266389977,6352076.58869452]],"cx":2526015.2670778367,"cy":6352086.3243530495,"nombre":"Lote 8 - Mza C - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"301.83","m2_construido":"","avance_obra":"Terminado","fecha_entrega":"","costo":"14234.27","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"C","lote":"9","pts":[[2526000.432258325,6352066.94654223],[2526003.742245277,6352081.796971926],[2526023.266389977,6352076.58869452],[2526019.273623096,6352061.920403776]],"cx":2526011.678629169,"cy":6352071.813153113,"nombre":"Lote 9 - Mza C - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"302.0","m2_construido":"","avance_obra":"Terminado","fecha_entrega":"","costo":"14242.29","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"D","lote":"1","pts":[[2525692.739718073,6351958.979872517],[2525699.379642873,6351983.611661467],[2525711.232030952,6351980.788004011],[2525705.320640736,6351955.974763742]],"cx":2525702.1680081584,"cy":6351969.838575434,"nombre":"Lote 1 - Mza D - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"316.47","m2_construido":"316.47","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"14924.69","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"D","lote":"10","pts":[[2525807.760038303,6351957.791623375],[2525819.822542983,6351954.917908724],[2525813.904435719,6351930.091064957],[2525801.843071149,6351932.969562445]],"cx":2525810.832522039,"cy":6351943.942539875,"nombre":"Lote 10 - Mza D - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"316.47","m2_construido":"316.47","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"14924.69","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"D","lote":"11","pts":[[2525819.822543361,6351954.917910309],[2525831.884271226,6351952.044379046],[2525825.969693711,6351927.217759992],[2525813.907724923,6351930.090279974]],"cx":2525822.896058305,"cy":6351941.067582331,"nombre":"Lote 11 - Mza D - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"316.47","m2_construido":"316.47","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"14924.69","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"D","lote":"12","pts":[[2525831.883668279,6351952.04452269],[2525843.945223178,6351949.171034309],[2525838.029643898,6351924.340210313],[2525825.968691945,6351927.21355505]],"cx":2525834.9568068245,"cy":6351938.19233059,"nombre":"Lote 12 - Mza D - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"316.47","m2_construido":"316.47","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"14924.69","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"D","lote":"13","pts":[[2525843.945223178,6351949.17103431],[2525856.00539898,6351946.297874478],[2525850.089439023,6351921.465452579],[2525838.029643898,6351924.340210313]],"cx":2525847.01742627,"cy":6351935.31864292,"nombre":"Lote 13 - Mza D - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"316.47","m2_construido":"316.47","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"14924.69","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"D","lote":"14","pts":[[2525856.00539898,6351946.297874478],[2525868.064798803,6351943.424899514],[2525862.145167935,6351918.59166413],[2525850.089922462,6351921.467481827]],"cx":2525859.076322045,"cy":6351932.445479987,"nombre":"Lote 14 - Mza D - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"316.47","m2_construido":"316.47","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"14924.69","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"D","lote":"15","pts":[[2525868.064799181,6351943.424901098],[2525880.123422775,6351940.552109383],[2525874.206701538,6351915.716491985],[2525862.145582817,6351918.593404588]],"cx":2525871.1351265777,"cy":6351929.571726764,"nombre":"Lote 15 - Mza D - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"316.47","m2_construido":"316.47","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"14924.69","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"D","lote":"16","pts":[[2525880.118929916,6351940.553179741],[2525892.181271057,6351937.679504048],[2525886.264169217,6351912.842289057],[2525874.206320934,6351915.714894389]],"cx":2525883.1926727807,"cy":6351926.697466808,"nombre":"Lote 16 - Mza D - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"316.47","m2_construido":"316.47","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"14924.69","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"D","lote":"17","pts":[[2525892.181271057,6351937.679504048],[2525904.238343797,6351934.807083478],[2525898.317570483,6351909.96905546],[2525886.264446251,6351912.843451915]],"cx":2525895.250407897,"cy":6351923.824773725,"nombre":"Lote 17 - Mza D - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"316.47","m2_construido":"316.47","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"14924.69","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"D","lote":"18","pts":[[2525904.238343797,6351934.807083478],[2525916.294641143,6351931.934847632],[2525910.37677817,6351907.094437757],[2525898.321069619,6351909.969145092]],"cx":2525907.3077081824,"cy":6351920.95137849,"nombre":"Lote 18 - Mza D - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"316.47","m2_construido":"316.47","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"14924.69","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"D","lote":"19","pts":[[2525916.294641143,6351931.934847632],[2525928.350163249,6351929.062796476],[2525922.431990414,6351904.221085951],[2525910.376917623,6351907.095023116]],"cx":2525919.3634281075,"cy":6351918.078438293,"nombre":"Lote 19 - Mza D - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"316.47","m2_construido":"316.47","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"14924.69","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"D","lote":"2","pts":[[2525705.321951052,6351955.980260021],[2525717.388981401,6351953.097968962],[2525723.300752565,6351977.912808266],[2525711.232030952,6351980.788004013]],"cx":2525714.3109289925,"cy":6351966.944760315,"nombre":"Lote 2 - Mza D - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"316.47","m2_construido":"316.47","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"14924.69","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"D","lote":"20","pts":[[2525928.350163249,6351929.062796476],[2525940.374040376,6351926.198284271],[2525934.817457118,6351901.268382663],[2525922.431990414,6351904.221085951]],"cx":2525931.493412789,"cy":6351915.18763734,"nombre":"Lote 20 - Mza D - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"316.47","m2_construido":"316.47","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"14924.69","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"D","lote":"3","pts":[[2525723.300752565,6351977.912808266],[2525735.368696563,6351975.037797777],[2525729.457716221,6351950.226277965],[2525717.390221998,6351953.103176406]],"cx":2525726.379346837,"cy":6351964.070015103,"nombre":"Lote 3 - Mza D - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"316.47","m2_construido":"316.47","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"14924.69","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"D","lote":"4","pts":[[2525735.368696563,6351975.037797777],[2525747.435863027,6351972.162972522],[2525741.523330045,6351947.344935456],[2525729.457716221,6351950.226277965]],"cx":2525738.446401464,"cy":6351961.192995931,"nombre":"Lote 4 - Mza D - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"316.47","m2_construido":"316.47","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"14924.69","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"D","lote":"5","pts":[[2525741.523328973,6351947.344935712],[2525753.589338316,6351944.468696662],[2525759.502252171,6351969.288332455],[2525747.435863028,6351972.162972524]],"cx":2525750.5126956217,"cy":6351958.316234339,"nombre":"Lote 5 - Mza D - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"316.47","m2_construido":"316.47","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"14924.69","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"D","lote":"6","pts":[[2525753.590372362,6351944.473037104],[2525765.655984304,6351941.598582192],[2525771.567864113,6351966.413877542],[2525759.502252172,6351969.288332456]],"cx":2525762.579118238,"cy":6351955.443457323,"nombre":"Lote 6 - Mza D - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"316.47","m2_construido":"316.47","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"14924.69","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"D","lote":"7","pts":[[2525771.567864113,6351966.413877542],[2525783.632699017,6351963.53960775],[2525777.716037219,6351938.721462968],[2525765.655984304,6351941.598582192]],"cx":2525774.643146163,"cy":6351952.568382613,"nombre":"Lote 7 - Mza D - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"316.47","m2_construido":"316.47","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"14924.69","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"D","lote":"8","pts":[[2525783.632698697,6351963.539606408],[2525795.696757035,6351960.665523038],[2525789.77941172,6351935.841875697],[2525777.719919857,6351938.720537344]],"cx":2525786.707196827,"cy":6351949.691885622,"nombre":"Lote 8 - Mza D - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"316.47","m2_construido":"316.47","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"14924.69","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"D","lote":"9","pts":[[2525795.696757035,6351960.665523038],[2525807.760038303,6351957.791623375],[2525801.842312002,6351932.96637777],[2525789.780239734,6351935.845349271]],"cx":2525798.7698367685,"cy":6351946.817218363,"nombre":"Lote 9 - Mza D - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"316.47","m2_construido":"316.47","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"14924.69","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"E","lote":"1","pts":[[2525713.312713242,6352035.298459001],[2525716.695525196,6352047.847503246],[2525740.01853609,6352042.2911383],[2525737.00779334,6352029.653454029]],"cx":2525726.758641967,"cy":6352038.772638643,"nombre":"Lote 1 - Mza E - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"310.08","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"73374.53","etapa":"Nuevo Maipu - Etapa VI","dormitorios":"2"},{"manzana":"E","lote":"10","pts":[[2525829.734838206,6351994.960889483],[2525835.586512634,6352019.523470913],[2525847.532509692,6352016.677512491],[2525841.680835263,6351992.114931061]],"cx":2525838.6336739487,"cy":6352005.819200987,"nombre":"Lote 10 - Mza E - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"310.08","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"73374.53","etapa":"Nuevo Maipu - Etapa VI","dormitorios":"2"},{"manzana":"E","lote":"11","pts":[[2525841.680835271,6351992.114931061],[2525847.5325097,6352016.677512489],[2525859.478506757,6352013.831554067],[2525853.626832329,6351989.268972638]],"cx":2525850.579671014,"cy":6352002.973242564,"nombre":"Lote 11 - Mza E - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"310.08","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"73374.53","etapa":"Nuevo Maipu - Etapa VI","dormitorios":"2"},{"manzana":"E","lote":"12","pts":[[2525853.626832332,6351989.268972623],[2525859.478506761,6352013.831554053],[2525871.424503819,6352010.985595632],[2525865.57282939,6351986.423014201]],"cx":2525862.5256680753,"cy":6352000.127284127,"nombre":"Lote 12 - Mza E - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"297.68","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"72789.74","etapa":"Nuevo Maipu - Etapa VI","dormitorios":"2"},{"manzana":"E","lote":"13","pts":[[2525865.5728294,6351986.423014198],[2525871.424503828,6352010.985595627],[2525883.370500887,6352008.139637206],[2525877.518826458,6351983.577055776]],"cx":2525874.4716651435,"cy":6351997.281325702,"nombre":"Lote 13 - Mza E - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"301.83","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"72985.46","etapa":"Nuevo Maipu - Etapa VI","dormitorios":"2"},{"manzana":"E","lote":"14","pts":[[2525877.518826471,6351983.577055789],[2525883.3705009,6352008.139637218],[2525895.316497958,6352005.293678797],[2525889.464823529,6351980.731097368]],"cx":2525886.4176622145,"cy":6351994.435367293,"nombre":"Lote 14 - Mza E - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"301.83","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"72985.46","etapa":"Nuevo Maipu - Etapa VI","dormitorios":"2"},{"manzana":"E","lote":"15","pts":[[2525889.464823537,6351980.731097365],[2525895.316497966,6352005.293678795],[2525907.262495024,6352002.447720374],[2525901.410820595,6351977.885138945]],"cx":2525898.3636592804,"cy":6351991.58940887,"nombre":"Lote 15 - Mza E - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"301.83","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"72985.46","etapa":"Nuevo Maipu - Etapa VI","dormitorios":"2"},{"manzana":"E","lote":"16","pts":[[2525901.410820599,6351977.88513892],[2525907.262495028,6352002.447720349],[2525919.208492086,6351999.601761928],[2525913.356817657,6351975.039180498]],"cx":2525910.3096563425,"cy":6351988.743450424,"nombre":"Lote 16 - Mza E - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"301.83","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"72985.46","etapa":"Nuevo Maipu - Etapa VI","dormitorios":"2"},{"manzana":"E","lote":"17","pts":[[2525913.356817666,6351975.039180496],[2525919.208492094,6351999.601761925],[2525931.154489152,6351996.755803504],[2525925.302814723,6351972.193222073]],"cx":2525922.255653409,"cy":6351985.897491999,"nombre":"Lote 17 - Mza E - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"301.83","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"72985.46","etapa":"Nuevo Maipu - Etapa VI","dormitorios":"2"},{"manzana":"E","lote":"18","pts":[[2525925.302814734,6351972.19322207],[2525931.154489163,6351996.7558035],[2525943.100486221,6351993.909845078],[2525937.248811792,6351969.347263648]],"cx":2525934.2016504775,"cy":6351983.051533574,"nombre":"Lote 18 - Mza E - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"301.83","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"72985.46","etapa":"Nuevo Maipu - Etapa VI","dormitorios":"2"},{"manzana":"E","lote":"19","pts":[[2525943.100486227,6351993.909845102],[2525954.842647538,6351991.112447555],[2525949.348928278,6351966.464588565],[2525937.248811795,6351969.347263677]],"cx":2525946.135218459,"cy":6351980.208536224,"nombre":"Lote 19 - Mza E - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"305.45","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"73156.18","etapa":"Nuevo Maipu - Etapa VI","dormitorios":"2"},{"manzana":"E","lote":"2","pts":[[2525734.166861663,6352017.728556874],[2525740.018536091,6352042.291138303],[2525751.964533149,6352039.445179882],[2525746.11285872,6352014.882598453]],"cx":2525743.0656974055,"cy":6352028.586868378,"nombre":"Lote 2 - Mza E - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"310.08","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"73374.53","etapa":"Nuevo Maipu - Etapa VI","dormitorios":"2"},{"manzana":"E","lote":"20","pts":[[2525937.248811792,6351969.347263648],[2525949.348928278,6351966.464588564],[2525943.855209017,6351941.816729572],[2525931.39713737,6351944.784682249]],"cx":2525940.4625216145,"cy":6351955.603316008,"nombre":"Lote 20 - Mza E - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"314.64","m2_construido":"","avance_obra":"Terminado","fecha_entrega":"","costo":"14838.39","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"E","lote":"21","pts":[[2525919.451140303,6351947.630640644],[2525925.302814731,6351972.193222072],[2525937.24881179,6351969.347263652],[2525931.397137361,6351944.784682221]],"cx":2525928.3499760465,"cy":6351958.488952148,"nombre":"Lote 21 - Mza E - Natania 73- Nuevo Maipu","estado":"No Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"310.08","m2_construido":"","avance_obra":"Terminado","fecha_entrega":"","costo":"14623.34","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"E","lote":"22","pts":[[2525907.505143234,6351950.476599069],[2525913.356817663,6351975.039180498],[2525925.302814721,6351972.193222078],[2525919.451140292,6351947.630640648]],"cx":2525916.4039789774,"cy":6351961.334910573,"nombre":"Lote 22 - Mza E - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"310.08","m2_construido":"","avance_obra":"Terminado","fecha_entrega":"","costo":"14623.34","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"E","lote":"23","pts":[[2525895.559146168,6351953.322557493],[2525901.410820597,6351977.885138922],[2525913.356817655,6351975.039180501],[2525907.505143226,6351950.476599071]],"cx":2525904.4579819115,"cy":6351964.180868997,"nombre":"Lote 23 - Mza E - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"310.08","m2_construido":"","avance_obra":"Terminado","fecha_entrega":"","costo":"14623.34","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"E","lote":"24","pts":[[2525883.613149106,6351956.16851594],[2525889.464823535,6351980.731097369],[2525901.410820592,6351977.885138948],[2525895.559146164,6351953.322557517]],"cx":2525892.5119848493,"cy":6351967.026827443,"nombre":"Lote 24 - Mza E - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"310.08","m2_construido":"","avance_obra":"Terminado","fecha_entrega":"","costo":"14623.34","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"E","lote":"25","pts":[[2525871.667152039,6351959.014474362],[2525877.518826468,6351983.577055793],[2525889.464823526,6351980.731097371],[2525883.613149097,6351956.168515942]],"cx":2525880.5659877826,"cy":6351969.872785867,"nombre":"Lote 25 - Mza E - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"310.08","m2_construido":"","avance_obra":"Terminado","fecha_entrega":"","costo":"14623.34","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"E","lote":"26","pts":[[2525859.721154969,6351961.860432772],[2525865.572829397,6351986.4230142],[2525877.518826455,6351983.577055778],[2525871.667152026,6351959.014474349]],"cx":2525868.619990712,"cy":6351972.718744274,"nombre":"Lote 26 - Mza E - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"310.08","m2_construido":"","avance_obra":"Terminado","fecha_entrega":"","costo":"14623.34","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"E","lote":"27","pts":[[2525847.775157901,6351964.706391197],[2525853.626832329,6351989.268972626],[2525865.572829387,6351986.423014205],[2525859.721154958,6351961.860432774]],"cx":2525856.673993644,"cy":6351975.564702701,"nombre":"Lote 27 - Mza E - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"310.08","m2_construido":"","avance_obra":"Terminado","fecha_entrega":"","costo":"14623.34","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"E","lote":"28","pts":[[2525835.829160839,6351967.552349633],[2525841.680835268,6351992.114931062],[2525853.626832326,6351989.268972642],[2525847.775157898,6351964.706391212]],"cx":2525844.7279965826,"cy":6351978.410661137,"nombre":"Lote 28 - Mza E - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"310.08","m2_construido":"","avance_obra":"Terminado","fecha_entrega":"","costo":"14623.34","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"E","lote":"29","pts":[[2525823.883163774,6351970.398308057],[2525829.734838203,6351994.960889486],[2525841.680835261,6351992.114931065],[2525835.829160832,6351967.552349634]],"cx":2525832.781999517,"cy":6351981.2566195605,"nombre":"Lote 29 - Mza E - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"310.08","m2_construido":"","avance_obra":"Terminado","fecha_entrega":"","costo":"14623.34","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"E","lote":"3","pts":[[2525746.112858728,6352014.882598449],[2525751.964533156,6352039.445179879],[2525763.910530214,6352036.599221458],[2525758.058855786,6352012.036640028]],"cx":2525755.011694471,"cy":6352025.740909953,"nombre":"Lote 3 - Mza E - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"310.08","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"73374.53","etapa":"Nuevo Maipu - Etapa VI","dormitorios":"2"},{"manzana":"E","lote":"30","pts":[[2525811.937166705,6351973.24426648],[2525817.788841134,6351997.80684791],[2525829.734838191,6351994.960889489],[2525823.883163763,6351970.398308058]],"cx":2525820.836002448,"cy":6351984.102577984,"nombre":"Lote 30 - Mza E - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"310.08","m2_construido":"","avance_obra":"Terminado","fecha_entrega":"","costo":"14623.34","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"E","lote":"31","pts":[[2525799.991169638,6351976.090224897],[2525805.842844066,6352000.652806326],[2525817.788841124,6351997.806847905],[2525811.937166696,6351973.244266474]],"cx":2525808.8900053813,"cy":6351986.9485364,"nombre":"Lote 31 - Mza E - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"310.08","m2_construido":"","avance_obra":"Terminado","fecha_entrega":"","costo":"14623.34","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"E","lote":"32","pts":[[2525788.045172569,6351978.936183321],[2525793.896846998,6352003.498764751],[2525805.842844056,6352000.65280633],[2525799.991169627,6351976.090224899]],"cx":2525796.944008312,"cy":6351989.794494825,"nombre":"Lote 32 - Mza E - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"310.08","m2_construido":"","avance_obra":"Terminado","fecha_entrega":"","costo":"14623.34","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"E","lote":"33","pts":[[2525776.0991755,6351981.782141746],[2525781.950849929,6352006.344723175],[2525793.896846987,6352003.498764754],[2525788.045172558,6351978.936183323]],"cx":2525784.9980112435,"cy":6351992.640453249,"nombre":"Lote 33 - Mza E - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"310.08","m2_construido":"","avance_obra":"Terminado","fecha_entrega":"","costo":"14623.34","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"E","lote":"34","pts":[[2525764.153178438,6351984.628100175],[2525770.004852867,6352009.190681603],[2525781.950849924,6352006.344723182],[2525776.099175496,6351981.782141753]],"cx":2525773.0520141814,"cy":6351995.486411678,"nombre":"Lote 34 - Mza E - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"310.08","m2_construido":"","avance_obra":"Terminado","fecha_entrega":"","costo":"14623.34","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"E","lote":"35","pts":[[2525752.207181366,6351987.474058597],[2525758.058855795,6352012.036640027],[2525770.004852852,6352009.190681606],[2525764.153178424,6351984.628100175]],"cx":2525761.106017109,"cy":6351998.3323701015,"nombre":"Lote 35 - Mza E - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"310.08","m2_construido":"","avance_obra":"Terminado","fecha_entrega":"","costo":"14623.34","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"E","lote":"36","pts":[[2525740.261184296,6351990.320017023],[2525746.112858725,6352014.882598453],[2525758.058855783,6352012.036640031],[2525752.207181354,6351987.474058601]],"cx":2525749.1600200394,"cy":6352001.178328528,"nombre":"Lote 36 - Mza E - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"310.08","m2_construido":"","avance_obra":"Terminado","fecha_entrega":"","costo":"14623.34","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"E","lote":"37","pts":[[2525728.315187231,6351993.165975447],[2525734.166861659,6352017.728556877],[2525746.112858718,6352014.882598456],[2525740.261184289,6351990.320017026]],"cx":2525737.2140229745,"cy":6352004.024286951,"nombre":"Lote 37 - Mza E - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Lote","estilo":"","m2_terreno":"310.08","m2_construido":"","avance_obra":"Terminado","fecha_entrega":"","costo":"14623.34","etapa":"Nuevo Maipu - Etapa Lotes ","dormitorios":""},{"manzana":"E","lote":"38","pts":[[2525703.545870199,6351999.066901595],[2525728.315187231,6351993.165975447],[2525731.195583173,6352005.256525041],[2525706.78222702,6352011.072648736]],"cx":2525717.459716906,"cy":6352002.140512705,"nombre":"Lote 38 - Mza E - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"310.08","m2_construido":"68.0","avance_obra":"Pozo","fecha_entrega":"","costo":"81291.88","etapa":"Nuevo Maipu - Etapa VI","dormitorios":"3"},{"manzana":"E","lote":"39","pts":[[2525706.78222702,6352011.072648735],[2525710.02309587,6352023.095133918],[2525734.079994875,6352017.363930904],[2525731.195583174,6352005.256525039]],"cx":2525720.5202252343,"cy":6352014.197059649,"nombre":"Lote 39 - Mza E - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"310.08","m2_construido":"68.0","avance_obra":"Pozo","fecha_entrega":"","costo":"81291.88","etapa":"Nuevo Maipu - Etapa VI","dormitorios":"3"},{"manzana":"E","lote":"4","pts":[[2525758.058855797,6352012.036640023],[2525763.910530226,6352036.599221453],[2525775.856527284,6352033.753263031],[2525770.004852855,6352009.190681602]],"cx":2525766.9576915405,"cy":6352022.894951527,"nombre":"Lote 4 - Mza E - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"310.08","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"73374.53","etapa":"Nuevo Maipu - Etapa VI","dormitorios":"2"},{"manzana":"E","lote":"40","pts":[[2525710.023095869,6352023.095133918],[2525713.312713242,6352035.298459001],[2525737.007793343,6352029.653454028],[2525734.079994879,6352017.363930904]],"cx":2525723.6058993335,"cy":6352026.352744463,"nombre":"Lote 40 - Mza E - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"310.08","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"73374.53","etapa":"Nuevo Maipu - Etapa VI","dormitorios":"2"},{"manzana":"E","lote":"5","pts":[[2525770.004852869,6352009.190681601],[2525775.856527298,6352033.753263031],[2525787.802524356,6352030.90730461],[2525781.950849927,6352006.344723179]],"cx":2525778.9036886124,"cy":6352020.048993106,"nombre":"Lote 5 - Mza E - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"310.08","m2_construido":"68.0","avance_obra":"Pozo","fecha_entrega":"","costo":"81291.88","etapa":"Nuevo Maipu - Etapa VI","dormitorios":"3"},{"manzana":"E","lote":"6","pts":[[2525781.950849932,6352006.344723172],[2525787.80252436,6352030.907304602],[2525799.748521418,6352028.061346181],[2525793.89684699,6352003.498764751]],"cx":2525790.8496856745,"cy":6352017.203034676,"nombre":"Lote 6 - Mza E - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"310.08","m2_construido":"68.0","avance_obra":"Pozo","fecha_entrega":"","costo":"81291.88","etapa":"Nuevo Maipu - Etapa VI","dormitorios":"3"},{"manzana":"E","lote":"7","pts":[[2525793.896847,6352003.498764747],[2525799.748521429,6352028.061346177],[2525811.694518487,6352025.215387755],[2525805.842844058,6352000.652806326]],"cx":2525802.795682743,"cy":6352014.357076251,"nombre":"Lote 7 - Mza E - Natania 73- Nuevo Maipu","estado":"Adjudicado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"310.08","m2_construido":"68.0","avance_obra":"Pozo","fecha_entrega":"","costo":"81291.88","etapa":"Nuevo Maipu - Etapa VI","dormitorios":"3"},{"manzana":"E","lote":"8","pts":[[2525805.842844069,6352000.652806323],[2525811.694518498,6352025.215387753],[2525823.640515556,6352022.369429331],[2525817.788841127,6351997.806847901]],"cx":2525814.7416798123,"cy":6352011.511117827,"nombre":"Lote 8 - Mza E - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"310.08","m2_construido":"68.0","avance_obra":"Pozo","fecha_entrega":"","costo":"81291.88","etapa":"Nuevo Maipu - Etapa VI","dormitorios":"3"},{"manzana":"E","lote":"9","pts":[[2525817.788841136,6351997.806847906],[2525823.640515565,6352022.369429335],[2525835.586512623,6352019.523470914],[2525829.734838195,6351994.960889485]],"cx":2525826.6876768796,"cy":6352008.66515941,"nombre":"Lote 9 - Mza E - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"310.08","m2_construido":"68.0","avance_obra":"Pozo","fecha_entrega":"","costo":"81291.88","etapa":"Nuevo Maipu - Etapa VI","dormitorios":"3"},{"manzana":"F","lote":"1","pts":[[2525730.625498676,6352099.522812405],[2525734.011407518,6352112.08334502],[2525756.589390757,6352106.704471979],[2525753.575891743,6352094.055218189]],"cx":2525743.700547173,"cy":6352103.091461899,"nombre":"Lote 1 - Mza F - Natania 73- Nuevo Maipu","estado":"Reservado SAAT","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"300.41","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"72918.49","etapa":"Nuevo Maipu - Etapa V","dormitorios":"2"},{"manzana":"F","lote":"10","pts":[[2525855.797470554,6352057.112946448],[2525861.649144985,6352081.675527887],[2525849.975838956,6352084.456521675],[2525844.124164532,6352059.893940248]],"cx":2525852.886654757,"cy":6352070.784734065,"nombre":"Lote 10 - Mza F - Natania 73- Nuevo Maipu","estado":"Reservado SAAT","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"68.0","avance_obra":"Pozo","fecha_entrega":"","costo":"80957.99","etapa":"Nuevo Maipu - Etapa V","dormitorios":"3"},{"manzana":"F","lote":"11","pts":[[2525867.470776579,6352054.33195266],[2525873.322451011,6352078.894534099],[2525861.649144981,6352081.675527887],[2525855.797470557,6352057.112946461]],"cx":2525864.559960782,"cy":6352068.003740277,"nombre":"Lote 11 - Mza F - Natania 73- Nuevo Maipu","estado":"Reservado SAAT","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"68.0","avance_obra":"Pozo","fecha_entrega":"","costo":"80957.99","etapa":"Nuevo Maipu - Etapa V","dormitorios":"3"},{"manzana":"F","lote":"12","pts":[[2525861.619102153,6352029.769371242],[2525849.945796128,6352032.550365033],[2525855.797470554,6352057.112946447],[2525867.470776579,6352054.33195266]],"cx":2525858.7082863534,"cy":6352043.441158846,"nombre":"Lote 12 - Mza F - Natania 73- Nuevo Maipu","estado":"Adjudicado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"73040.63","etapa":"Nuevo Maipu - Etapa V","dormitorios":"2"},{"manzana":"F","lote":"13","pts":[[2525849.945796128,6352032.550365029],[2525838.272490104,6352035.331358821],[2525844.124164529,6352059.893940235],[2525855.797470554,6352057.112946448]],"cx":2525847.0349803288,"cy":6352046.222152633,"nombre":"Lote 13 - Mza F - Natania 73- Nuevo Maipu","estado":"Reservado SAAT","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"73040.63","etapa":"Nuevo Maipu - Etapa V","dormitorios":"2"},{"manzana":"F","lote":"14","pts":[[2525838.272490106,6352035.331358834],[2525826.599184082,6352038.112352626],[2525832.450858507,6352062.674934039],[2525844.124164533,6352059.893940252]],"cx":2525835.361674307,"cy":6352049.003146437,"nombre":"Lote 14 - Mza F - Natania 73- Nuevo Maipu","estado":"Reservado SAAT","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"73040.63","etapa":"Nuevo Maipu - Etapa V","dormitorios":"2"},{"manzana":"F","lote":"15","pts":[[2525826.599184082,6352038.112352621],[2525814.925878057,6352040.893346413],[2525820.777552483,6352065.455927827],[2525832.450858508,6352062.674934039]],"cx":2525823.6883682823,"cy":6352051.7841402255,"nombre":"Lote 15 - Mza F - Natania 73- Nuevo Maipu","estado":"Reservado SAAT","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"73040.63","etapa":"Nuevo Maipu - Etapa V","dormitorios":"2"},{"manzana":"F","lote":"16","pts":[[2525814.925878053,6352040.893346394],[2525803.252572029,6352043.674340186],[2525809.104246455,6352068.236921598],[2525820.77755248,6352065.455927812]],"cx":2525812.015062254,"cy":6352054.565133997,"nombre":"Lote 16 - Mza F - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"73040.63","etapa":"Nuevo Maipu - Etapa V","dormitorios":"2"},{"manzana":"F","lote":"17","pts":[[2525803.252572027,6352043.674340181],[2525791.579266003,6352046.455333974],[2525797.430940429,6352071.017915386],[2525809.104246454,6352068.2369216]],"cx":2525800.3417562284,"cy":6352057.346127786,"nombre":"Lote 17 - Mza F - Natania 73- Nuevo Maipu","estado":"Reservado SAAT","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"73040.63","etapa":"Nuevo Maipu - Etapa V","dormitorios":"2"},{"manzana":"F","lote":"18","pts":[[2525791.579266003,6352046.455333968],[2525779.905959979,6352049.236327761],[2525785.757634404,6352073.798909174],[2525797.430940429,6352071.017915387]],"cx":2525788.6684502037,"cy":6352060.127121572,"nombre":"Lote 18 - Mza F - Natania 73- Nuevo Maipu","estado":"Reservado SAAT","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"73040.63","etapa":"Nuevo Maipu - Etapa V","dormitorios":"2"},{"manzana":"F","lote":"19","pts":[[2525779.905959981,6352049.236327772],[2525768.232653957,6352052.017321564],[2525774.084328382,6352076.579902976],[2525785.757634408,6352073.79890919]],"cx":2525776.995144182,"cy":6352062.908115376,"nombre":"Lote 19 - Mza F - Natania 73- Nuevo Maipu","estado":"Reservado SAAT","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"73040.63","etapa":"Nuevo Maipu - Etapa V","dormitorios":"2"},{"manzana":"F","lote":"2","pts":[[2525762.411022355,6352079.360896752],[2525768.262696786,6352103.923478191],[2525756.589390757,6352106.704471979],[2525750.737716332,6352082.141890551]],"cx":2525759.5002065576,"cy":6352093.032684368,"nombre":"Lote 2 - Mza F - Natania 73- Nuevo Maipu","estado":"Reservado SAAT","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"73040.63","etapa":"Nuevo Maipu - Etapa V","dormitorios":"2"},{"manzana":"F","lote":"20","pts":[[2525768.232653953,6352052.017321544],[2525756.559347929,6352054.798315337],[2525762.411022354,6352079.36089675],[2525774.084328379,6352076.579902964]],"cx":2525765.321838154,"cy":6352065.689109148,"nombre":"Lote 20 - Mza F - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"68.0","avance_obra":"Pozo","fecha_entrega":"","costo":"80957.99","etapa":"Nuevo Maipu - Etapa V","dormitorios":"3"},{"manzana":"F","lote":"21","pts":[[2525756.559347928,6352054.798315332],[2525744.886041904,6352057.579309124],[2525750.737716329,6352082.141890538],[2525762.411022355,6352079.360896752]],"cx":2525753.648532129,"cy":6352068.470102936,"nombre":"Lote 21 - Mza F - Natania 73- Nuevo Maipu","estado":"Reservado SAAT","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"68.0","avance_obra":"Pozo","fecha_entrega":"","costo":"80957.99","etapa":"Nuevo Maipu - Etapa V","dormitorios":"3"},{"manzana":"F","lote":"22","pts":[[2525720.861752522,6352063.302743372],[2525744.886041903,6352057.57930912],[2525747.765007459,6352069.663854623],[2525724.096502187,6352075.302528531]],"cx":2525734.4023260176,"cy":6352066.462108912,"nombre":"Lote 22 - Mza F - Natania 73- Nuevo Maipu","estado":"Reservado SAAT","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"300.41","m2_construido":"68.0","avance_obra":"Pozo","fecha_entrega":"","costo":"80835.85","etapa":"Nuevo Maipu - Etapa V","dormitorios":"3"},{"manzana":"F","lote":"23","pts":[[2525724.096502187,6352075.302528531],[2525727.335858944,6352087.319404378],[2525750.648073379,6352081.765611528],[2525747.76500746,6352069.663854623]],"cx":2525737.4613604927,"cy":6352078.512849765,"nombre":"Lote 23 - Mza F - Natania 73- Nuevo Maipu","estado":"Reservado SAAT","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"300.41","m2_construido":"68.0","avance_obra":"Pozo","fecha_entrega":"","costo":"80835.85","etapa":"Nuevo Maipu - Etapa V","dormitorios":"3"},{"manzana":"F","lote":"24","pts":[[2525727.335858944,6352087.319404378],[2525730.625498676,6352099.522812405],[2525753.575891745,6352094.055218189],[2525750.648073379,6352081.765611528]],"cx":2525740.5463306857,"cy":6352090.665761625,"nombre":"Lote 24 - Mza F - Natania 73- Nuevo Maipu","estado":"Reservado SAAT","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"300.41","m2_construido":"68.0","avance_obra":"Pozo","fecha_entrega":"","costo":"80835.85","etapa":"Nuevo Maipu - Etapa V","dormitorios":"3"},{"manzana":"F","lote":"3","pts":[[2525774.08432838,6352076.579902964],[2525779.93600281,6352101.142484404],[2525768.262696781,6352103.923478191],[2525762.411022357,6352079.360896764]],"cx":2525771.173512582,"cy":6352090.251690581,"nombre":"Lote 3 - Mza F - Natania 73- Nuevo Maipu","estado":"Reservado SAAT","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"73040.63","etapa":"Nuevo Maipu - Etapa V","dormitorios":"2"},{"manzana":"F","lote":"4","pts":[[2525785.757634408,6352073.79890919],[2525791.609308839,6352098.36149063],[2525779.936002809,6352101.142484417],[2525774.084328385,6352076.579902991]],"cx":2525782.84681861,"cy":6352087.470696807,"nombre":"Lote 4 - Mza F - Natania 73- Nuevo Maipu","estado":"Reservado SAAT","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"73040.63","etapa":"Nuevo Maipu - Etapa V","dormitorios":"2"},{"manzana":"F","lote":"5","pts":[[2525797.43094043,6352071.017915387],[2525803.282614861,6352095.580496827],[2525791.609308832,6352098.361490615],[2525785.757634407,6352073.798909189]],"cx":2525794.5201246324,"cy":6352084.689703004,"nombre":"Lote 5 - Mza F - Natania 73- Nuevo Maipu","estado":"Reservado SAAT","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"73040.63","etapa":"Nuevo Maipu - Etapa V","dormitorios":"2"},{"manzana":"F","lote":"6","pts":[[2525809.104246455,6352068.2369216],[2525814.955920886,6352092.79950304],[2525803.282614856,6352095.580496827],[2525797.430940432,6352071.017915401]],"cx":2525806.193430657,"cy":6352081.908709218,"nombre":"Lote 6 - Mza F - Natania 73- Nuevo Maipu","estado":"Reservado SAAT","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"73040.63","etapa":"Nuevo Maipu - Etapa V","dormitorios":"2"},{"manzana":"F","lote":"7","pts":[[2525820.77755248,6352065.455927812],[2525826.629226911,6352090.018509252],[2525814.955920882,6352092.79950304],[2525809.104246457,6352068.236921613]],"cx":2525817.866736682,"cy":6352079.127715428,"nombre":"Lote 7 - Mza F - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"68.0","avance_obra":"Pozo","fecha_entrega":"","costo":"80957.99","etapa":"Nuevo Maipu - Etapa V","dormitorios":"3"},{"manzana":"F","lote":"8","pts":[[2525832.450858509,6352062.674934039],[2525838.302532939,6352087.237515479],[2525826.62922691,6352090.018509267],[2525820.777552485,6352065.45592784]],"cx":2525829.540042711,"cy":6352076.346721657,"nombre":"Lote 8 - Mza F - Natania 73- Nuevo Maipu","estado":"Reservado SAAT","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"68.0","avance_obra":"Pozo","fecha_entrega":"","costo":"80957.99","etapa":"Nuevo Maipu - Etapa V","dormitorios":"3"},{"manzana":"F","lote":"9","pts":[[2525844.124164533,6352059.893940252],[2525849.975838964,6352084.456521692],[2525838.302532934,6352087.237515479],[2525832.45085851,6352062.674934053]],"cx":2525841.213348735,"cy":6352073.565727869,"nombre":"Lote 9 - Mza F - Natania 73- Nuevo Maipu","estado":"Reservado SAAT","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"68.0","avance_obra":"Pozo","fecha_entrega":"","costo":"80957.99","etapa":"Nuevo Maipu - Etapa V","dormitorios":"3"},{"manzana":"G","lote":"1","pts":[[2525747.971212997,6352163.869320422],[2525751.327289841,6352176.319186798],[2525773.660353406,6352170.99866227],[2525770.673405226,6352158.460856412]],"cx":2525760.9080653675,"cy":6352167.412006476,"nombre":"Lote 1 - Mza G - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"294.46","m2_construido":"68.0","avance_obra":"Terminado","fecha_entrega":"2025-03-05","costo":"75841.57","etapa":"Nuevo Maipu - Etapa I","dormitorios":"3"},{"manzana":"G","lote":"10","pts":[[2525872.868433212,6352121.407136792],[2525878.720107643,6352145.969718231],[2525867.046801614,6352148.750712018],[2525861.195127189,6352124.188130592]],"cx":2525869.9576174146,"cy":6352135.078924408,"nombre":"Lote 10 - Mza G - Natania 73- Nuevo Maipu","estado":"Reservado SAAT","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"73040.63","etapa":"Nuevo Maipu - Etapa IV","dormitorios":"2"},{"manzana":"G","lote":"11","pts":[[2525884.541739237,6352118.626143004],[2525890.393413668,6352143.188724444],[2525878.720107639,6352145.969718232],[2525872.868433214,6352121.407136806]],"cx":2525881.6309234397,"cy":6352132.297930622,"nombre":"Lote 11 - Mza G - Natania 73- Nuevo Maipu","estado":"Adjudicado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Mediterranea","m2_terreno":"303.0","m2_construido":"62.0","avance_obra":"Pozo","fecha_entrega":"","costo":"80286.75","etapa":"Nuevo Maipu - Etapa IV","dormitorios":"2"},{"manzana":"G","lote":"12","pts":[[2525896.215045263,6352115.845149219],[2525902.066719694,6352140.407730659],[2525890.393413664,6352143.188724446],[2525884.54173924,6352118.62614302]],"cx":2525893.3042294653,"cy":6352129.516936836,"nombre":"Lote 12 - Mza G - Natania 73- Nuevo Maipu","estado":"Adjudicado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Mediterranea","m2_terreno":"303.0","m2_construido":"62.0","avance_obra":"Pozo","fecha_entrega":"","costo":"80286.75","etapa":"Nuevo Maipu - Etapa IV","dormitorios":"2"},{"manzana":"G","lote":"13","pts":[[2525907.888351288,6352113.064155433],[2525913.740025719,6352137.626736872],[2525902.06671969,6352140.40773066],[2525896.215045265,6352115.845149232]],"cx":2525904.977535491,"cy":6352126.735943049,"nombre":"Lote 13 - Mza G - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa","estilo":"Mediterranea","m2_terreno":"303.0","m2_construido":"72.0","avance_obra":"Terminado","fecha_entrega":"2025-03-05","costo":"76283.83","etapa":"Nuevo Maipu - Etapa I","dormitorios":"3"},{"manzana":"G","lote":"14","pts":[[2525919.561657314,6352110.283161646],[2525925.413331744,6352134.845743086],[2525913.740025715,6352137.626736873],[2525907.88835129,6352113.064155446]],"cx":2525916.650841516,"cy":6352123.9549492635,"nombre":"Lote 14 - Mza G - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Mediterranea","m2_terreno":"303.0","m2_construido":"62.0","avance_obra":"Terminado","fecha_entrega":"2025-03-05","costo":"71487.14","etapa":"Nuevo Maipu - Etapa I","dormitorios":"2"},{"manzana":"G","lote":"15","pts":[[2525931.234963335,6352107.502167845],[2525937.086637766,6352132.064749284],[2525925.413331737,6352134.845743071],[2525919.561657312,6352110.283161644]],"cx":2525928.3241475374,"cy":6352121.173955461,"nombre":"Lote 15 - Mza G - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Mediterranea","m2_terreno":"303.0","m2_construido":"34.61","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"68586.82","etapa":"Nuevo Maipu - Etapa I","dormitorios":"0"},{"manzana":"G","lote":"16","pts":[[2525942.90826936,6352104.721174057],[2525948.759943791,6352129.283755496],[2525937.086637762,6352132.064749284],[2525931.234963338,6352107.502167857]],"cx":2525939.997453563,"cy":6352118.392961673,"nombre":"Lote 16 - Mza G - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Mediterranea","m2_terreno":"303.0","m2_construido":"62.0","avance_obra":"Terminado","fecha_entrega":"2025-03-25","costo":"80286.75","etapa":"Nuevo Maipu - Etapa I","dormitorios":"2"},{"manzana":"G","lote":"17","pts":[[2525954.58157539,6352101.940180286],[2525960.43324982,6352126.502761726],[2525948.759943791,6352129.283755514],[2525942.908269367,6352104.721174088]],"cx":2525951.670759592,"cy":6352115.611967904,"nombre":"Lote 17 - Mza G - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Mediterranea","m2_terreno":"303.0","m2_construido":"62.0","avance_obra":"Terminado","fecha_entrega":"2025-03-05","costo":"71487.14","etapa":"Nuevo Maipu - Etapa I","dormitorios":"2"},{"manzana":"G","lote":"18","pts":[[2525966.254881415,6352099.1591865],[2525972.106555846,6352123.72176794],[2525960.433249816,6352126.502761727],[2525954.581575392,6352101.9401803]],"cx":2525963.3440656173,"cy":6352112.830974117,"nombre":"Lote 18 - Mza G - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Mediterranea","m2_terreno":"303.0","m2_construido":"32.0","avance_obra":"Terminado","fecha_entrega":"2025-03-05","costo":"62712.83","etapa":"Nuevo Maipu - Etapa I","dormitorios":"0"},{"manzana":"G","lote":"19","pts":[[2525978.286142606,6352096.29291515],[2525984.137817038,6352120.85549659],[2525972.464511008,6352123.636490378],[2525966.612836584,6352099.073908951]],"cx":2525975.375326809,"cy":6352109.964702767,"nombre":"Lote 19 - Mza G - Natania 73- Nuevo Maipu","estado":"Disponible","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa","estilo":"Mediterranea","m2_terreno":"303.7","m2_construido":"72.0","avance_obra":"Terminado","fecha_entrega":"2025-03-05","costo":"76316.84","etapa":"Nuevo Maipu - Etapa I","dormitorios":"3"},{"manzana":"G","lote":"2","pts":[[2525779.481985009,6352143.655087083],[2525785.33365944,6352168.217668523],[2525773.660353411,6352170.99866231],[2525767.808678986,6352146.436080884]],"cx":2525776.5711692115,"cy":6352157.3268747,"nombre":"Lote 2 - Mza G - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa Futura","estilo":"Futura","m2_terreno":"303.0","m2_construido":"53.95","avance_obra":"Terminado","fecha_entrega":"2025-03-05","costo":"68841.02","etapa":"Nuevo Maipu - Etapa I","dormitorios":"2"},{"manzana":"G","lote":"20","pts":[[2525972.434468179,6352071.730333732],[2525960.761162155,6352074.511327524],[2525966.612836581,6352099.073908937],[2525978.286142606,6352096.29291515]],"cx":2525969.5236523803,"cy":6352085.402121336,"nombre":"Lote 20 - Mza G - Natania 73- Nuevo Maipu","estado":"Escriturado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Americana","m2_terreno":"312.88","m2_construido":"62.0","avance_obra":"Terminado","fecha_entrega":"2025-03-05","costo":"68970.06","etapa":"Nuevo Maipu - Etapa I","dormitorios":"3"},{"manzana":"G","lote":"21","pts":[[2525960.403206988,6352074.59660508],[2525948.729900964,6352077.377598873],[2525954.581575389,6352101.940180286],[2525966.254881414,6352099.1591865]],"cx":2525957.4923911886,"cy":6352088.268392685,"nombre":"Lote 21 - Mza G - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa","estilo":"Americana","m2_terreno":"303.0","m2_construido":"52.0","avance_obra":"Terminado","fecha_entrega":"2025-03-05","costo":"62025.74","etapa":"Nuevo Maipu - Etapa I","dormitorios":"2"},{"manzana":"G","lote":"22","pts":[[2525948.729900963,6352077.377598867],[2525937.056594938,6352080.15859266],[2525942.908269364,6352104.721174073],[2525954.581575389,6352101.940180286]],"cx":2525945.819085164,"cy":6352091.0493864715,"nombre":"Lote 22 - Mza G - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"58.0","avance_obra":"Terminado","fecha_entrega":"2025-03-05","costo":"68841.02","etapa":"Nuevo Maipu - Etapa I","dormitorios":"2"},{"manzana":"G","lote":"23","pts":[[2525937.056594933,6352080.158592638],[2525925.383288909,6352082.93958643],[2525931.234963335,6352107.502167844],[2525942.90826936,6352104.721174057]],"cx":2525934.1457791342,"cy":6352093.830380242,"nombre":"Lote 23 - Mza G - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"58.0","avance_obra":"Terminado","fecha_entrega":"2025-03-05","costo":"68841.02","etapa":"Nuevo Maipu - Etapa I","dormitorios":"2"},{"manzana":"G","lote":"24","pts":[[2525925.383288909,6352082.939586425],[2525913.709982884,6352085.720580218],[2525919.56165731,6352110.283161631],[2525931.234963335,6352107.502167845]],"cx":2525922.4724731096,"cy":6352096.61137403,"nombre":"Lote 24 - Mza G - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"68.0","avance_obra":"Terminado","fecha_entrega":"2025-03-05","costo":"76244.31","etapa":"Nuevo Maipu - Etapa I","dormitorios":"3"},{"manzana":"G","lote":"25","pts":[[2525913.709982887,6352085.720580227],[2525902.036676862,6352088.501574018],[2525907.888351288,6352113.064155433],[2525919.561657313,6352110.283161646]],"cx":2525910.7991670873,"cy":6352099.3923678305,"nombre":"Lote 25 - Mza G - Natania 73- Nuevo Maipu","estado":"Escriturado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"58.0","avance_obra":"Terminado","fecha_entrega":"2025-03-05","costo":"68841.02","etapa":"Nuevo Maipu - Etapa I","dormitorios":"2"},{"manzana":"G","lote":"26","pts":[[2525902.036676861,6352088.501574013],[2525890.363370837,6352091.282567805],[2525896.215045262,6352115.845149219],[2525907.888351287,6352113.064155433]],"cx":2525899.1258610617,"cy":6352102.173361617,"nombre":"Lote 26 - Mza G - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"58.0","avance_obra":"Terminado","fecha_entrega":"2025-03-05","costo":"68841.02","etapa":"Nuevo Maipu - Etapa I","dormitorios":"2"},{"manzana":"G","lote":"27","pts":[[2525890.363370836,6352091.282567799],[2525878.690064812,6352094.063561592],[2525884.541739237,6352118.626143005],[2525896.215045262,6352115.845149219]],"cx":2525887.4525550366,"cy":6352104.954355404,"nombre":"Lote 27 - Mza G - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"68.0","avance_obra":"Terminado","fecha_entrega":"2025-03-05","costo":"76244.31","etapa":"Nuevo Maipu - Etapa I","dormitorios":"3"},{"manzana":"G","lote":"28","pts":[[2525878.690064811,6352094.063561586],[2525867.016758786,6352096.844555378],[2525872.868433212,6352121.407136792],[2525884.541739237,6352118.626143004]],"cx":2525875.7792490115,"cy":6352107.73534919,"nombre":"Lote 28 - Mza G - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"68.0","avance_obra":"Terminado","fecha_entrega":"2025-03-05","costo":"76244.31","etapa":"Nuevo Maipu - Etapa I","dormitorios":"3"},{"manzana":"G","lote":"29","pts":[[2525867.016758785,6352096.844555372],[2525855.343452761,6352099.625549165],[2525861.195127187,6352124.188130578],[2525872.868433212,6352121.407136792]],"cx":2525864.105942986,"cy":6352110.516342977,"nombre":"Lote 29 - Mza G - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"68.0","avance_obra":"Terminado","fecha_entrega":"2025-03-05","costo":"76244.31","etapa":"Nuevo Maipu - Etapa I","dormitorios":"3"},{"manzana":"G","lote":"3","pts":[[2525791.155291034,6352140.874093296],[2525797.006965465,6352165.436674736],[2525785.333659436,6352168.217668523],[2525779.481985011,6352143.655087096]],"cx":2525788.244475236,"cy":6352154.545880913,"nombre":"Lote 3 - Mza G - Natania 73- Nuevo Maipu","estado":"Reservado SAAT","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"73040.63","etapa":"Nuevo Maipu - Etapa IV","dormitorios":"2"},{"manzana":"G","lote":"30","pts":[[2525855.343452759,6352099.625549159],[2525843.670146735,6352102.406542951],[2525849.521821161,6352126.969124364],[2525861.195127186,6352124.188130578]],"cx":2525852.4326369604,"cy":6352113.297336763,"nombre":"Lote 30 - Mza G - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"58.0","avance_obra":"Terminado","fecha_entrega":"2025-03-05","costo":"68841.02","etapa":"Nuevo Maipu - Etapa I","dormitorios":"2"},{"manzana":"G","lote":"31","pts":[[2525843.670146733,6352102.406542939],[2525831.996840708,6352105.18753673],[2525837.848515134,6352129.750118144],[2525849.521821159,6352126.969124356]],"cx":2525840.759330934,"cy":6352116.078330543,"nombre":"Lote 31 - Mza G - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"68.0","avance_obra":"Terminado","fecha_entrega":"2025-03-05","costo":"76244.31","etapa":"Nuevo Maipu - Etapa I","dormitorios":"3"},{"manzana":"G","lote":"32","pts":[[2525831.996840709,6352105.18753673],[2525820.323534685,6352107.968530524],[2525826.17520911,6352132.531111936],[2525837.848515136,6352129.75011815]],"cx":2525829.08602491,"cy":6352118.859324335,"nombre":"Lote 32 - Mza G - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Mediterranea","m2_terreno":"303.0","m2_construido":"72.0","avance_obra":"Terminado","fecha_entrega":"2025-03-05","costo":"76283.83","etapa":"Nuevo Maipu - Etapa I","dormitorios":"3"},{"manzana":"G","lote":"33","pts":[[2525820.323534683,6352107.968530519],[2525808.650228659,6352110.74952431],[2525814.501903084,6352135.312105723],[2525826.17520911,6352132.531111936]],"cx":2525817.412718884,"cy":6352121.640318123,"nombre":"Lote 33 - Mza G - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"58.0","avance_obra":"Terminado","fecha_entrega":"2025-03-05","costo":"68841.02","etapa":"Nuevo Maipu - Etapa I","dormitorios":"2"},{"manzana":"G","lote":"34","pts":[[2525808.650228658,6352110.749524305],[2525796.976922634,6352113.530518097],[2525802.828597059,6352138.093099511],[2525814.501903084,6352135.312105723]],"cx":2525805.739412859,"cy":6352124.421311909,"nombre":"Lote 34 - Mza G - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"68.0","avance_obra":"Terminado","fecha_entrega":"2025-03-05","costo":"76244.31","etapa":"Nuevo Maipu - Etapa I","dormitorios":"3"},{"manzana":"G","lote":"35","pts":[[2525796.976922633,6352113.530518091],[2525785.303616609,6352116.311511884],[2525791.155291034,6352140.874093297],[2525802.828597059,6352138.093099511]],"cx":2525794.066106834,"cy":6352127.202305696,"nombre":"Lote 35 - Mza G - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"58.0","avance_obra":"Terminado","fecha_entrega":"2025-03-05","costo":"68841.02","etapa":"Nuevo Maipu - Etapa I","dormitorios":"2"},{"manzana":"G","lote":"36","pts":[[2525785.303616607,6352116.311511877],[2525773.630310583,6352119.092505668],[2525779.481985008,6352143.655087083],[2525791.155291034,6352140.874093296]],"cx":2525782.392800808,"cy":6352129.983299481,"nombre":"Lote 36 - Mza G - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"68.0","avance_obra":"Terminado","fecha_entrega":"2025-03-05","costo":"76244.31","etapa":"Nuevo Maipu - Etapa I","dormitorios":"3"},{"manzana":"G","lote":"37","pts":[[2525773.630310582,6352119.092505663],[2525761.957004558,6352121.873499456],[2525767.808678983,6352146.436080869],[2525779.481985008,6352143.655087083]],"cx":2525770.719494783,"cy":6352132.764293268,"nombre":"Lote 37 - Mza G - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"58.0","avance_obra":"Terminado","fecha_entrega":"2025-03-05","costo":"68841.02","etapa":"Nuevo Maipu - Etapa I","dormitorios":"2"},{"manzana":"G","lote":"38","pts":[[2525738.177634844,6352127.538585151],[2525761.957004559,6352121.873499456],[2525764.808819344,6352133.844078772],[2525741.381878443,6352139.425203513]],"cx":2525751.5813342975,"cy":6352130.670341723,"nombre":"Lote 38 - Mza G - Natania 73- Nuevo Maipu","estado":"Escriturado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"294.46","m2_construido":"68.0","avance_obra":"Terminado","fecha_entrega":"2025-03-05","costo":"75841.57","etapa":"Nuevo Maipu - Etapa I","dormitorios":"3"},{"manzana":"G","lote":"39","pts":[[2525741.381878443,6352139.425203512],[2525744.650665561,6352151.551255668],[2525767.718078636,6352146.055783152],[2525764.808819346,6352133.844078772]],"cx":2525754.6398604964,"cy":6352142.719080276,"nombre":"Lote 39 - Mza G - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"300.0","m2_construido":"68.0","avance_obra":"Terminado","fecha_entrega":"2025-03-05","costo":"76102.83","etapa":"Nuevo Maipu - Etapa I","dormitorios":"3"},{"manzana":"G","lote":"4","pts":[[2525802.828597059,6352138.093099511],[2525808.680271491,6352162.655680949],[2525797.006965461,6352165.436674737],[2525791.155291037,6352140.87409331]],"cx":2525799.917781262,"cy":6352151.764887126,"nombre":"Lote 4 - Mza G - Natania 73- Nuevo Maipu","estado":"Reservado SAAT","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"73040.63","etapa":"Nuevo Maipu - Etapa IV","dormitorios":"2"},{"manzana":"G","lote":"40","pts":[[2525744.650665561,6352151.551255668],[2525747.971212997,6352163.869320422],[2525770.673405224,6352158.46085641],[2525767.718078637,6352146.055783151]],"cx":2525757.753340605,"cy":6352154.984303912,"nombre":"Lote 40 - Mza G - Natania 73- Nuevo Maipu","estado":"Entregado","negocio_comercial":"Venta Directa AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"300.0","m2_construido":"58.0","avance_obra":"Terminado","fecha_entrega":"2025-03-05","costo":"68699.54","etapa":"Nuevo Maipu - Etapa I","dormitorios":"2"},{"manzana":"G","lote":"5","pts":[[2525814.501903085,6352135.312105723],[2525820.353577516,6352159.874687163],[2525808.680271487,6352162.655680951],[2525802.828597063,6352138.093099524]],"cx":2525811.5910872878,"cy":6352148.9838933395,"nombre":"Lote 5 - Mza G - Natania 73- Nuevo Maipu","estado":"Adjudicado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"73040.63","etapa":"Nuevo Maipu - Etapa IV","dormitorios":"2"},{"manzana":"G","lote":"6","pts":[[2525826.17520911,6352132.531111936],[2525832.026883541,6352157.093693376],[2525820.353577512,6352159.874687164],[2525814.501903087,6352135.312105738]],"cx":2525823.2643933124,"cy":6352146.202899554,"nombre":"Lote 6 - Mza G - Natania 73- Nuevo Maipu","estado":"Adjudicado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"73040.63","etapa":"Nuevo Maipu - Etapa IV","dormitorios":"2"},{"manzana":"G","lote":"7","pts":[[2525837.848515136,6352129.75011815],[2525843.700189567,6352154.31269959],[2525832.026883538,6352157.093693378],[2525826.175209113,6352132.531111951]],"cx":2525834.9376993384,"cy":6352143.421905768,"nombre":"Lote 7 - Mza G - Natania 73- Nuevo Maipu","estado":"Adjudicado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"73040.63","etapa":"Nuevo Maipu - Etapa IV","dormitorios":"2"},{"manzana":"G","lote":"8","pts":[[2525849.52182116,6352126.969124356],[2525855.37349559,6352151.531705796],[2525843.700189561,6352154.312699584],[2525837.848515137,6352129.750118158]],"cx":2525846.611005362,"cy":6352140.640911974,"nombre":"Lote 8 - Mza G - Natania 73- Nuevo Maipu","estado":"Adjudicado","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"73040.63","etapa":"Nuevo Maipu - Etapa IV","dormitorios":"2"},{"manzana":"G","lote":"9","pts":[[2525861.195127187,6352124.188130578],[2525867.046801617,6352148.750712017],[2525855.373495588,6352151.531705804],[2525849.521821164,6352126.969124379]],"cx":2525858.284311389,"cy":6352137.859918194,"nombre":"Lote 9 - Mza G - Natania 73- Nuevo Maipu","estado":"Reservado SAAT","negocio_comercial":"Venta Planes AR","tipo_inmueble":"Casa","estilo":"Europea","m2_terreno":"303.0","m2_construido":"58.0","avance_obra":"Pozo","fecha_entrega":"","costo":"73040.63","etapa":"Nuevo Maipu - Etapa IV","dormitorios":"2"}],"manzanas":[{"label":"G","pts":[[2525751.327289841,6352176.319186798],[2525983.779861864,6352120.940774122],[2525972.792423342,6352071.645056142],[2525738.177634844,6352127.538585151]]},{"label":"E","pts":[[2525716.695525196,6352047.847503246],[2525703.545870199,6351999.066901595],[2525943.855209017,6351941.816729572],[2525954.842647538,6351991.112447556]]},{"label":"C","pts":[[2525962.057256118,6351894.775086378],[2525973.096093192,6351892.143699867],[2526051.215613438,6352179.358600395],[2526026.931473533,6352185.836658163]]},{"label":"D","pts":[[2525692.739718073,6351958.979872517],[2525699.379642873,6351983.611661467],[2525940.374040376,6351926.198284273],[2525934.817457118,6351901.268382663]]},{"label":"A","pts":[[2525735.414001243,6352178.759580603],[2525755.348436978,6352191.808925201],[2525817.195920698,6352177.074670178],[2525828.857843451,6352228.473529939],[2525825.541023673,6352239.559745465],[2525731.309378293,6352264.697059148],[2525649.444447291,6351969.294270218],[2525677.167565021,6351962.68576267],[2525735.414001241,6352178.759580602]]},{"label":"B","pts":[[2525852.26296282,6352223.163126256],[2525840.513983895,6352171.38057436],[2525987.261030509,6352136.559219442],[2525999.854343302,6352193.0597764],[2525859.454487902,6352230.512960975]]},{"label":"F","pts":[[2525958.323816178,6352006.730892858],[2525720.861752522,6352063.302743372],[2525734.011407518,6352112.08334502],[2525969.311254702,6352056.02661084]]}],"bbox":{"minx":2525649.444447291,"miny":6351892.143699867,"maxx":2526051.220174495,"maxy":6352264.69705915}};
+
+function normalizeEstado(e) {
+  if (e === 'Escriturado')    return 'Entregado';
+  if (e === 'Reservado SAAT') return 'Adjudicado';
+  return e || 'Sin datos';
+}
+
+const DATA = {
+  ...RAW_DATA,
+  lots: RAW_DATA.lots.map(l => ({ ...l, estado: normalizeEstado(l.estado) }))
+};
+
+const SCHEMES = {
+  estado: {
+    getKey: l => l.estado,
+    colors: {
+      'Disponible':    '#22d3a0',
+      'Adjudicado':    '#f5a623',
+      'Entregado':     '#7dd3fc',
+      'No Disponible': '#e85555',
+      'Sin datos':     '#474d5f',
+    }
+  },
+  tipo: {
+    getKey: l => l.tipo_inmueble || '—',
+    colors: {
+      'Casa':        '#4f8ef7',
+      'Casa Futura': '#a78bfa',
+      'Lote':        '#34d399',
+      'Macrolote':   '#fbbf24',
+      '—':           '#474d5f',
+    }
+  },
+  estilo: {
+    getKey: l => l.estilo || '—',
+    colors: {
+      'Europea':      '#4f8ef7',
+      'Mediterránea': '#f97316',
+      'Mediterranea': '#f97316',
+      'Americana':    '#a3e635',
+      'Futura':       '#a78bfa',
+      'Futura Plus':  '#c084fc',
+      '—':            '#474d5f',
+    }
+  }
+};
+
+let colorMode = 'estado';
+let legendFilters = new Set();
+let selectedIdx = null;
+
+// SVG
+const svg = document.getElementById('map-svg');
+const mapWrap = document.getElementById('map-wrap');
+const W=960, H=800, PAD=28;
+const bb=DATA.bbox;
+const scale=Math.min((W-PAD*2)/(bb.maxx-bb.minx),(H-PAD*2)/(bb.maxy-bb.miny));
+const tx=x=>PAD+(x-bb.minx)*scale;
+const ty=y=>H-PAD-(y-bb.miny)*scale;
+const p2s=pts=>pts.map(p=>`${tx(p[0])},${ty(p[1])}`).join(' ');
+
+svg.setAttribute('width',W); svg.setAttribute('height',H);
+svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+
+// Manzana outlines
+const mzG=document.createElementNS('http://www.w3.org/2000/svg','g');
+DATA.manzanas.forEach(mz=>{
+  const poly=document.createElementNS('http://www.w3.org/2000/svg','polygon');
+  poly.setAttribute('points',p2s(mz.pts)); poly.setAttribute('class','mzn-poly');
+  mzG.appendChild(poly);
+  const cx=mz.pts.reduce((s,p)=>s+p[0],0)/mz.pts.length;
+  const cy=mz.pts.reduce((s,p)=>s+p[1],0)/mz.pts.length;
+  const lbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+  lbl.setAttribute('x',tx(cx)); lbl.setAttribute('y',ty(cy));
+  lbl.setAttribute('class','mzn-lbl'); lbl.textContent=`MZA ${mz.label||''}`;
+  mzG.appendChild(lbl);
+});
+svg.appendChild(mzG);
+
+// Lot polygons
+const lotG=document.createElementNS('http://www.w3.org/2000/svg','g');
+const lotEls=[];
+DATA.lots.forEach((lot,i)=>{
+  const poly=document.createElementNS('http://www.w3.org/2000/svg','polygon');
+  poly.setAttribute('points',p2s(lot.pts)); poly.setAttribute('class','lot-poly');
+  poly.addEventListener('click',()=>selectLot(i));
+  lotG.appendChild(poly); lotEls.push(poly);
+  const cx=lot.pts.reduce((s,p)=>s+p[0],0)/lot.pts.length;
+  const cy=lot.pts.reduce((s,p)=>s+p[1],0)/lot.pts.length;
+  const lbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+  lbl.setAttribute('x',tx(cx)); lbl.setAttribute('y',ty(cy));
+  lbl.setAttribute('class','lot-lbl'); lbl.textContent=lot.lote||'';
+  lotG.appendChild(lbl);
+});
+svg.appendChild(lotG);
+
+function getColor(lot) {
+  const s=SCHEMES[colorMode], k=s.getKey(lot);
+  return s.colors[k] || '#474d5f';
+}
+function applyColors() {
+  DATA.lots.forEach((lot,i)=>{
+    lotEls[i].setAttribute('fill',getColor(lot));
+    lotEls[i].setAttribute('fill-opacity','0.82');
+  });
+}
+
+// Legend (Ctrl+click multi)
+function buildLegend() {
+  const s=SCHEMES[colorMode], el=document.getElementById('legend');
+  el.innerHTML='';
+  Object.entries(s.colors).forEach(([key,color])=>{
+    const total=DATA.lots.filter(l=>s.getKey(l)===key).length;
+    if(!total) return;
+    const div=document.createElement('div');
+    div.className='leg-item'+(legendFilters.has(key)?' on':'');
+    div.innerHTML=`<div class="leg-dot" style="background:${color}"></div>${key}<span class="leg-count">${total}</span>`;
+    div.addEventListener('click',e=>{
+      if(e.ctrlKey||e.metaKey){
+        legendFilters.has(key)?legendFilters.delete(key):legendFilters.add(key);
+      } else {
+        if(legendFilters.size===1&&legendFilters.has(key)) legendFilters.clear();
+        else { legendFilters.clear(); legendFilters.add(key); }
+      }
+      updateFilters();
+    });
+    el.appendChild(div);
+  });
+}
+
+// Pan/zoom
+let offX=0,offY=0,zoom=1,dragging=false,lx,ly;
+function applyTf(){ svg.style.transform=`translate(${offX}px,${offY}px) scale(${zoom})`; }
+mapWrap.addEventListener('mousedown',e=>{dragging=true;lx=e.clientX;ly=e.clientY;});
+document.addEventListener('mousemove',e=>{if(!dragging)return;offX+=e.clientX-lx;offY+=e.clientY-ly;lx=e.clientX;ly=e.clientY;applyTf();});
+document.addEventListener('mouseup',()=>dragging=false);
+mapWrap.addEventListener('wheel',e=>{
+  e.preventDefault();
+  const r=mapWrap.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;
+  const nz=Math.min(Math.max(zoom*(e.deltaY>0?.85:1.18),.4),16);
+  offX=mx-(mx-offX)*(nz/zoom);offY=my-(my-offY)*(nz/zoom);zoom=nz;applyTf();
+},{passive:false});
+document.getElementById('zin').addEventListener('click',()=>{
+  const r=mapWrap.getBoundingClientRect(),cx=r.width/2,cy=r.height/2;
+  const nz=Math.min(zoom*1.3,16);offX=cx-(cx-offX)*(nz/zoom);offY=cy-(cy-offY)*(nz/zoom);zoom=nz;applyTf();
+});
+document.getElementById('zout').addEventListener('click',()=>{
+  const r=mapWrap.getBoundingClientRect(),cx=r.width/2,cy=r.height/2;
+  const nz=Math.max(zoom*.77,.4);offX=cx-(cx-offX)*(nz/zoom);offY=cy-(cy-offY)*(nz/zoom);zoom=nz;applyTf();
+});
+document.getElementById('fit-btn').addEventListener('click',fitView);
+function fitView(){
+  const r=mapWrap.getBoundingClientRect();
+  zoom=Math.min(r.width/W,r.height/H)*.92;
+  offX=(r.width-W*zoom)/2; offY=(r.height-H*zoom)/2; applyTf();
+}
+window.addEventListener('resize',fitView);
+setTimeout(fitView,80);
+
+// Filters
+function getSelValues(id) {
+  const sel=document.getElementById(id);
+  if(sel.multiple) return Array.from(sel.selectedOptions).map(o=>o.value);
+  return sel.value ? [sel.value] : [];
+}
+
+function lotMatches(lot) {
+  const s=SCHEMES[colorMode];
+  if(legendFilters.size>0 && !legendFilters.has(s.getKey(lot))) return false;
+  const tipo  =getSelValues('f-tipo');
+  const neg   =getSelValues('f-negocio');
+  const eta   =getSelValues('f-etapa');
+  const ava   =getSelValues('f-avance');
+  const mzn   =getSelValues('f-manzana');
+  if(tipo.length && !tipo.includes(lot.tipo_inmueble)) return false;
+  if(neg.length  && !neg.includes(lot.negocio_comercial)) return false;
+  if(eta.length  && !eta.includes(lot.etapa)) return false;
+  if(ava.length  && !ava.includes(lot.avance_obra)) return false;
+  if(mzn.length  && !mzn.includes(lot.manzana)) return false;
+  return true;
+}
+
+function fmtUSD(n) {
+  if(!n) return 'USD 0';
+  return 'USD '+n.toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:0});
+}
+
+function updateFilters() {
+  let total=0,totalUSD=0,disp=0,dispUSD=0,adj=0,adjUSD=0,ent=0,entUSD=0;
+  DATA.lots.forEach((lot,i)=>{
+    const match=lotMatches(lot);
+    lotEls[i].classList.toggle('dimmed',!match);
+    if(!match) return;
+    const cost=parseFloat(lot.costo)||0;
+    total++; totalUSD+=cost;
+    if(lot.estado==='Disponible') { disp++;  dispUSD+=cost; }
+    if(lot.estado==='Adjudicado') { adj++;   adjUSD+=cost; }
+    if(lot.estado==='Entregado')  { ent++;   entUSD+=cost; }
+  });
+  document.getElementById('kpi-total-q').textContent=total;
+  document.getElementById('kpi-total-usd').textContent=fmtUSD(totalUSD);
+  document.getElementById('kpi-disp-q').textContent=disp;
+  document.getElementById('kpi-disp-usd').textContent=fmtUSD(dispUSD);
+  document.getElementById('kpi-adj-q').textContent=adj;
+  document.getElementById('kpi-adj-usd').textContent=fmtUSD(adjUSD);
+  document.getElementById('kpi-ent-q').textContent=ent;
+  document.getElementById('kpi-ent-usd').textContent=fmtUSD(entUSD);
+  buildLegend();
+}
+
+// Populate single selects
+function populateSel(id, values) {
+  const sel=document.getElementById(id);
+  [...new Set(values.filter(v=>v&&v!=='nan'))].sort().forEach(v=>{
+    const o=document.createElement('option'); o.value=o.textContent=v; sel.appendChild(o);
+  });
+}
+populateSel('f-negocio', DATA.lots.map(l=>l.negocio_comercial));
+populateSel('f-etapa',   DATA.lots.map(l=>l.etapa));
+populateSel('f-avance',  DATA.lots.map(l=>l.avance_obra));
+
+['f-tipo','f-negocio','f-etapa','f-avance','f-manzana'].forEach(id=>{
+  document.getElementById(id).addEventListener('change',updateFilters);
+});
+
+document.getElementById('reset-btn').addEventListener('click',()=>{
+  ['f-negocio','f-etapa','f-avance','f-manzana'].forEach(id=>{
+    document.getElementById(id).value='';
+  });
+  // Clear multi-select tipo
+  Array.from(document.getElementById('f-tipo').options).forEach(o=>o.selected=false);
+  legendFilters.clear();
+  updateFilters();
+});
+
+// Mode tabs
+document.querySelectorAll('.mode-tab').forEach(tab=>{
+  tab.addEventListener('click',()=>{
+    document.querySelectorAll('.mode-tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    colorMode=tab.dataset.mode; legendFilters.clear();
+    applyColors(); updateFilters();
+  });
+});
+
+// Detail panel — abrir/cerrar
+const detailEl = document.getElementById('detail-panel');
+
+function deselectLot() {
+  if(selectedIdx!==null) lotEls[selectedIdx].classList.remove('sel');
+  selectedIdx=null;
+  detailEl.classList.remove('open');
+}
+
+function selectLot(i) {
+  if(selectedIdx===i) { deselectLot(); return; }
+  if(selectedIdx!==null) lotEls[selectedIdx].classList.remove('sel');
+  selectedIdx=i; lotEls[i].classList.add('sel');
+  renderDetail(DATA.lots[i]);
+  detailEl.classList.add('open');
+}
+
+// Click en el fondo del mapa (no en un lote) → cerrar panel
+mapWrap.addEventListener('click', e => {
+  if(e.target===mapWrap || e.target===svg) deselectLot();
+});
+const fv=v=>(!v||v==='nan'||v==='None'||v==='')?'—':v;
+const fm2=v=>{ if(!v||v==='nan'||v==='')return'—'; const n=parseFloat(v); return isNaN(n)?'—':n.toFixed(2)+' m²'; };
+const fusd=v=>{ if(!v||v==='nan'||v==='')return'—'; const n=parseFloat(v); return isNaN(n)?'—':'USD '+n.toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:0}); };
+
+// Cambio 3: formato mm yyyy
+const fdate=v=>{
+  if(!v||v==='nan'||v==='')return'—';
+  try {
+    const d=new Date(v);
+    if(isNaN(d)) return v;
+    const mm=String(d.getUTCMonth()+1).padStart(2,'0');
+    return mm+' '+d.getUTCFullYear();
+  } catch(e){ return v; }
+};
+
+// Cambio 4: precio contado y CI
+const fci=(costo,precio)=>{
+  const c=parseFloat(costo), p=parseFloat(precio);
+  if(!c||isNaN(c)||!p||isNaN(p)||c===0) return '—';
+  return (p/c).toFixed(2)+'x';
+};
+
+function renderDetail(lot) {
+  const color=getColor(lot);
+  document.getElementById('det-name').textContent=lot.nombre||`Mza ${lot.manzana} · Lote ${lot.lote}`;
+  const badge=document.getElementById('det-badge');
+  badge.style.display='inline-flex';
+  badge.style.background=color+'28'; badge.style.color=color; badge.style.border=`1px solid ${color}45`;
+  badge.innerHTML=`<span style="width:5px;height:5px;border-radius:50%;background:${color};display:inline-block"></span>${lot.estado||'—'}`;
+
+  const precioContado = lot.precio_contado || '';
+  const ciVal = fci(lot.costo, precioContado);
+
+  document.getElementById('det-body').innerHTML=`
+    <div class="det-grp">
+      <div class="det-grp-ttl">Ubicación</div>
+      <div class="det-row"><span class="det-k">Manzana</span><span class="det-v">${fv(lot.manzana)}</span></div>
+      <div class="det-row"><span class="det-k">Lote</span><span class="det-v">${fv(lot.lote)}</span></div>
+      <div class="det-row"><span class="det-k">Etapa</span><span class="det-v">${fv((lot.etapa||'').replace('Nuevo Maipu - ',''))}</span></div>
+    </div>
+    <div class="det-grp">
+      <div class="det-grp-ttl">Producto</div>
+      <div class="det-row"><span class="det-k">Tipo</span><span class="det-v">${fv(lot.tipo_inmueble)}</span></div>
+      <div class="det-row"><span class="det-k">Estilo</span><span class="det-v">${fv(lot.estilo)}</span></div>
+      <div class="det-row"><span class="det-k">Dormitorios</span><span class="det-v">${fv(lot.dormitorios)}</span></div>
+    </div>
+    <div class="det-grp">
+      <div class="det-grp-ttl">Superficies</div>
+      <div class="det-row"><span class="det-k">Terreno total</span><span class="det-v">${fm2(lot.m2_terreno)}</span></div>
+      <div class="det-row"><span class="det-k">Construido</span><span class="det-v">${fm2(lot.m2_construido)}</span></div>
+    </div>
+    <div class="det-grp">
+      <div class="det-grp-ttl">Comercial</div>
+      <div class="det-row"><span class="det-k">Negocio</span><span class="det-v">${fv(lot.negocio_comercial)}</span></div>
+      <div class="det-row"><span class="det-k">Avance obra</span><span class="det-v">${fv(lot.avance_obra)}</span></div>
+      <div class="det-row"><span class="det-k">Entrega planif.</span><span class="det-v">${fdate(lot.fecha_entrega)}</span></div>
+    </div>
+    <div class="det-grp">
+      <div class="det-grp-ttl">Precio</div>
+      <div class="det-row"><span class="det-k">Costo</span><span class="det-v mono">${fusd(lot.costo)}</span></div>
+      <div class="det-row"><span class="det-k">Precio Contado</span><span class="det-v mono">${precioContado ? fusd(precioContado) : '<span style="color:var(--text3);font-size:10px;font-family:DM Sans,sans-serif">— por definir</span>'}</span></div>
+      <div class="det-row"><span class="det-k">CI</span><span class="det-v mono" style="color:${ciVal==='—'?'var(--text3)':'#f5a623'}">${ciVal}</span></div>
+    </div>`;
+}
+
+applyColors();
+updateFilters();
+
+// Cambio 5: Ampliar mapa
+document.getElementById('expand-btn').addEventListener('click',()=>{
+  document.body.classList.toggle('map-expanded');
+  setTimeout(fitView, 50);
+});
+</script>
+</body>
+</html>

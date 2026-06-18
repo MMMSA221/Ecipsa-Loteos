@@ -152,7 +152,7 @@ function build(emp, infraMap) {
   const manzanas = (geo.manzanas || []).map(m => { const [cx, cy] = centroid(m.pts); return { label: m.label || '', pts: m.pts, cx, cy } })
   const skipped = Object.keys(comercial).filter(k => !usedKeys.has(k)).length
 
-  const keep = ['codigo', 'nombre', 'nombre_full', 'ubicacion', 'ciudad', 'provincia', 'estado_general', 'link_sitio', 'link_pipeline']
+  const keep = ['codigo', 'nombre', 'nombre_full', 'ubicacion', 'ciudad', 'provincia', 'estado_general', 'link_sitio', 'link_pipeline', 'tablero_html']
   const empMeta = {}; keep.forEach(k => { empMeta[k] = emp[k] })
   const data = { codigo: cod, emp: empMeta, manzanas, lots, georef: emp.georef || null }
   fs.writeFileSync(path.join(OUT, `${cod}.json`), JSON.stringify(data))

@@ -9,6 +9,7 @@
     "estado_general": "En ejecución",
     "link_sitio": "",
     "link_pipeline": "",
+    "tablero_html": "N73.html",
     "infra": {
       "gas": 100,
       "agua": 100,
@@ -37,6 +38,7 @@
     "estado_general": "En ejecución",
     "link_sitio": "",
     "link_pipeline": "",
+    "tablero_html": "N62.html",
     "infra": {
       "gas": 100,
       "agua": 100,
@@ -65,6 +67,7 @@
     "estado_general": "En ejecución",
     "link_sitio": "",
     "link_pipeline": "",
+    "tablero_html": "",
     "infra": {
       "gas": 100,
       "agua": 100,
@@ -94,6 +97,7 @@
     "estado_general": "En ejecución",
     "link_sitio": "",
     "link_pipeline": "",
+    "tablero_html": "N74.html",
     "infra": {
       "gas": 100,
       "agua": 100,
