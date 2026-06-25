@@ -15,6 +15,7 @@ function translateError(msg) {
 export default function Login() {
   const [email, setEmail]     = useState('')
   const [password, setPass]   = useState('')
+  const [mostrar, setMostrar] = useState(false)
   const [error, setError]     = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -50,8 +51,28 @@ export default function Login() {
           </div>
           <div className="form-group">
             <label className="form-label">Contraseña</label>
-            <input className="form-input" type="password" required placeholder="••••••••"
-              autoComplete="current-password" value={password} onChange={e => setPass(e.target.value)} />
+            <div style={{ position: 'relative' }}>
+              <input
+                className="form-input"
+                type={mostrar ? 'text' : 'password'}
+                required
+                placeholder="••••••••"
+                autoComplete="current-password"
+                value={password}
+                onChange={e => setPass(e.target.value)}
+                style={{ paddingRight: 70 }}
+              />
+              <button
+                type="button"
+                onClick={() => setMostrar(!mostrar)}
+                style={{
+                  position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
+                  background: 'transparent', border: 'none', cursor: 'pointer',
+                  color: '#64748b', fontSize: 11, fontWeight: 600, padding: 4
+                }}>
+                {mostrar ? 'Ocultar' : 'Mostrar'}
+              </button>
+            </div>
           </div>
           {error && <p className="form-error">{error}</p>}
           <button className="btn-primary" type="submit" disabled={loading}>
