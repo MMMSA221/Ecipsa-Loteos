@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../supabase'
+import { track } from '../tracking'
 
 const ERROR_MAP = {
   'Invalid login credentials': 'Email o contraseña incorrectos',
@@ -21,7 +22,12 @@ export default function Login() {
     e.preventDefault()
     setError(''); setLoading(true)
     const { error: err } = await supabase.auth.signInWithPassword({ email, password })
-    if (err) setError(translateError(err.message))
+    if (err) {
+      setError(translateError(err.message))
+    } else {
+      // Registrar login exitoso
+      track('login', { detalle: { metodo: 'password' } })
+    }
     setLoading(false)
   }
 
