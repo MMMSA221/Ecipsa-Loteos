@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../supabase'
+import { track } from '../tracking'
 
 export default function Navbar() {
   const [email, setEmail] = useState('')
@@ -10,6 +11,11 @@ export default function Navbar() {
       if (data?.user?.email) setEmail(data.user.email)
     })
   }, [])
+
+  async function handleLogout() {
+    await track('logout')
+    await supabase.auth.signOut()
+  }
 
   const initial = email ? email[0].toUpperCase() : 'E'
   const display = email ? email.split('@')[0] : 'Usuario'
@@ -28,7 +34,7 @@ export default function Navbar() {
         <div className="navbar-avatar">{initial}</div>
         <span>{display}</span>
       </div>
-      <button className="navbar-logout" onClick={() => supabase.auth.signOut()}>Salir</button>
+      <button className="navbar-logout" onClick={handleLogout}>Salir</button>
     </nav>
   )
 }
