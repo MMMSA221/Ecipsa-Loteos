@@ -4,9 +4,10 @@ import { supabase } from './supabase'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Emprendimiento from './pages/Emprendimiento'
+import Actividad from './pages/Actividad'
 
 export default function App() {
-  const [session, setSession] = useState(undefined) // undefined = loading
+  const [session, setSession] = useState(undefined)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session))
@@ -21,11 +22,16 @@ export default function App() {
     </div>
   )
 
+  const esAdmin = session?.user?.user_metadata?.role === 'admin'
+
   return (
     <Routes>
       <Route path="/login" element={!session ? <Login /> : <Navigate to="/" replace />} />
       <Route path="/" element={session ? <Dashboard /> : <Navigate to="/login" replace />} />
       <Route path="/emprendimiento/:codigo" element={session ? <Emprendimiento /> : <Navigate to="/login" replace />} />
+      <Route path="/actividad" element={
+        session ? (esAdmin ? <Actividad /> : <Navigate to="/" replace />) : <Navigate to="/login" replace />
+      } />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
