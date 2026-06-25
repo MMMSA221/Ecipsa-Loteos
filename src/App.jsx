@@ -5,6 +5,7 @@ import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Emprendimiento from './pages/Emprendimiento'
 import Actividad from './pages/Actividad'
+import CambiarPassword from './pages/CambiarPassword'
 
 export default function App() {
   const [session, setSession] = useState(undefined)
@@ -31,6 +32,9 @@ export default function App() {
       <Route path="/emprendimiento/:codigo" element={session ? <Emprendimiento /> : <Navigate to="/login" replace />} />
       <Route path="/actividad" element={
         session ? (esAdmin ? <Actividad /> : <Navigate to="/" replace />) : <Navigate to="/login" replace />
+      } />
+      <Route path="/cambiar-password" element={
+        session ? <CambiarPassword /> : <Navigate to="/login" replace />
       } />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
