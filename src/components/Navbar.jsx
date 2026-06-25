@@ -28,12 +28,12 @@ export default function Navbar() {
 
   return (
     <nav className="navbar">
-      <Link className="navbar-logo" to="/">
-        <div className="navbar-logo-mark">E</div>
-        <div className="navbar-logo-text">
-          <span>Grupo</span>
-          <span>ECIPSA</span>
-        </div>
+      <Link className="navbar-logo" to="/" style={{ display:'flex', alignItems:'center', gap:8 }}>
+        <img
+          src={import.meta.env.BASE_URL + 'logo_ecipsa.svg'}
+          alt="Grupo ECIPSA"
+          style={{ height: 32, width: 'auto' }}
+        />
       </Link>
       <div className="navbar-spacer" />
 
