@@ -25,7 +25,6 @@ export default function Login() {
     if (err) {
       setError(translateError(err.message))
     } else {
-      // Registrar login exitoso
       track('login', { detalle: { metodo: 'password' } })
     }
     setLoading(false)
@@ -34,10 +33,12 @@ export default function Login() {
   return (
     <div className="login-page">
       <div className="login-card">
-        <div className="login-logo">
-          <div className="login-logo-mark">E</div>
-          <p>Grupo</p>
-          <p>ECIPSA</p>
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+          <img
+            src={import.meta.env.BASE_URL + 'logo_ecipsa.svg'}
+            alt="Grupo ECIPSA"
+            style={{ width: 180, height: 'auto', display: 'inline-block' }}
+          />
         </div>
         <h1 className="login-title">Gestión de Loteos</h1>
         <p className="login-sub">Ingresá con tu cuenta corporativa</p>
