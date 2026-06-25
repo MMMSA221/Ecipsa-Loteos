@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import { track } from '../tracking'
 import { supabase } from '../supabase'
 import { getEmprendimiento } from '../data/loader'
 import MANIFEST from '../data/manifest.json'
@@ -127,6 +128,7 @@ export default function Emprendimiento() {
     const m = MANIFEST.find(e => e.codigo === codigo)
     setInfra((m && m.infra) || {})
     setLoading(false)
+    track('abrir_emprendimiento', { emprendimiento: codigo })
   }, [codigo])
 
   /* ───────── BBox + transformaciones CAD → SVG ───────── */
@@ -462,7 +464,18 @@ export default function Emprendimiento() {
                       <polygon
                         className={'t-lot' + (!matches(l) ? ' dimmed' : '') + (selId === l.id ? ' sel' : '')}
                         points={tf.p2s(l.pts)} fill={colorOf(l)} fillOpacity="0.82"
-                        onClick={e => { e.stopPropagation(); if (!movedRef.current) setSelId(l.id) }} />
+                        onClick={e => {
+  e.stopPropagation();
+  if (!movedRef.current) {
+    setSelId(l.id);
+    track('ver_lote', {
+      emprendimiento: codigo,
+      manzana: l.manzana,
+      lote: l.lote,
+      detalle: { estado: l.estado, costo: l.costo }
+    });
+  }
+}} />
                       <text className="t-lotlbl" x={tf.tx(cx)} y={tf.ty(cy)}>{l.lote}</text>
                     </g>
                   )
