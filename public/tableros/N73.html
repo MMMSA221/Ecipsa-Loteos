@@ -683,13 +683,13 @@ function renderDetail(lot) {
 // Georreferencia por afinidad DXF→lat/lon, ajustada con los 6 puntos de
 // control A–F del DXF (capas "PUNTO A"…"PUNTO F"). Residual ~2,3 m.
 const TILE_URL = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
-const _lat = [6.4749369161e-08, 9.29498388758e-06, -92.1691768228];
-const _lon = [1.07777198519e-05, 2.3697063931e-08, -96.1354809955];
+const _lat = [1.55301967750e-7, 0.00000910522404596, -91.1925481289];
+const _lon = [0.0000107169385636, -4.40095182077e-8, -95.5518925609];
 function svgToLL(x, y) {
   return [ _lat[0]*x + _lat[1]*y + _lat[2],
            _lon[0]*x + _lon[1]*y + _lon[2] ];
 }
-let satMap = null, satLayerGroup = null, satPolys = [], satActive = false;
+let satMap = null, satLayerGroup = null, satLabelLayer = null, satPolys = [], satActive = false;
 
 function initSatMap() {
   if (satMap) return;
@@ -700,8 +700,19 @@ function initSatMap() {
 
   satMap = L.map('sat-map', { center:[clat,clon], zoom:17, zoomControl:true, preferCanvas:true });
   L.tileLayer(TILE_URL, { attribution:'© Esri / Maxar', maxZoom:20, tileSize:256, keepBuffer:4 }).addTo(satMap);
-
   satLayerGroup = L.layerGroup().addTo(satMap);
+  satLabelLayer = L.layerGroup().addTo(satMap);
+
+  drawSatFeatures();
+  const allLL = DATA.lots.flatMap(l => l.pts.map(p => svgToLL(p[0], p[1])));
+  satMap.fitBounds(allLL, { padding:[20,20] });
+}
+
+// Dibuja (o redibuja) lotes + etiquetas usando la transformación actual _lat/_lon
+function drawSatFeatures() {
+  if (!satMap) return;
+  satLayerGroup.clearLayers();
+  satLabelLayer.clearLayers();
   satPolys = [];
   DATA.lots.forEach(lot => {
     const coords = lot.pts.map(p => svgToLL(p[0], p[1]));
@@ -735,12 +746,11 @@ function initSatMap() {
     const cxm = mz.pts.reduce((s,p)=>s+p[0],0)/mz.pts.length;
     const cym = mz.pts.reduce((s,p)=>s+p[1],0)/mz.pts.length;
     const [lat, lon] = svgToLL(cxm, cym);
-    L.tooltip({ permanent:true, direction:'center', className:'sat-tip', interactive:false })
-      .setContent('<b>' + (mz.label||'') + '</b>').setLatLng([lat, lon]).addTo(satMap);
+    satLabelLayer.addLayer(
+      L.tooltip({ permanent:true, direction:'center', className:'sat-tip', interactive:false })
+        .setContent('<b>' + (mz.label||'') + '</b>').setLatLng([lat, lon])
+    );
   });
-
-  const allLL = DATA.lots.flatMap(l => l.pts.map(p => svgToLL(p[0], p[1])));
-  satMap.fitBounds(allLL, { padding:[20,20] });
 }
 
 function toggleSat() {
@@ -751,6 +761,7 @@ function toggleSat() {
   const wrap = document.getElementById('map-wrap');
   if (satActive) {
     btn.classList.add('active');
+    document.body.classList.add('sat-on');
     btn.innerHTML = '🗺️ Plano';
     satDiv.style.display = 'block';
     satDiv.style.width  = wrap.offsetWidth  + 'px';
@@ -764,6 +775,7 @@ function toggleSat() {
     setTimeout(()=>{ if(satMap) satMap.invalidateSize(true); }, 800);
   } else {
     btn.classList.remove('active');
+    document.body.classList.remove('sat-on');
     btn.innerHTML = '🛰️ Satélite';
     satDiv.style.display = 'none';
     svgEl.style.display = '';
@@ -774,8 +786,6 @@ function toggleSat() {
 
 applyColors();
 updateFilters();
-
-// Cambio 5: Ampliar mapa
 document.getElementById('expand-btn').addEventListener('click',()=>{
   document.body.classList.toggle('map-expanded');
   setTimeout(fitView, 50);
