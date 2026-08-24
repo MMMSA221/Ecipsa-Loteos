@@ -484,8 +484,25 @@ export default function Emprendimiento() {
             </>)}
           </svg>
           {satView && georef && (
-            <SatelliteView lots={rawLots} manzanas={mzns} georef={georef} onSelect={null} />
-          )}
+  <SatelliteView
+    lots={lots}
+    manzanas={mzns}
+    greens={greens}
+    georef={georef}
+    colorOf={colorOf}
+    matches={matches}
+    selId={selId}
+    onSelect={(l) => {
+      setSelId(l.id);
+      track('ver_lote', {
+        emprendimiento: codigo,
+        manzana: l.manzana,
+        lote: l.lote,
+        detalle: { estado: l.estado, costo: l.costo, origen: 'satelite' }
+      });
+    }}
+  />
+)}
           {georef && (
             <button className="t-sat-toggle" onClick={() => setSatView(!satView)}>
               {satView ? '🗺️ Plano' : '🛰️ Satélite'}
