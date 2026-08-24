@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>N74 · Santa Lucía II — Tablero de Stock y Obra</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 :root {
   --bg:#363b48; --surface:#3f4453; --surface2:#474d5f; --surface3:#50566a;
@@ -94,6 +96,20 @@ body.map-expanded .expand-lbl::before{content:'✕  Cerrar';}
 ::-webkit-scrollbar{width:3px;}
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+/* ── Vista satelital (Leaflet + tiles Esri) ── */
+.sat-toggle{position:absolute;top:14px;left:14px;z-index:20;background:rgba(39,43,53,.92);
+  border:1px solid rgba(255,255,255,.15);color:#eee;padding:7px 16px;border-radius:8px;
+  font-size:12px;font-weight:600;cursor:pointer;backdrop-filter:blur(6px);transition:all .15s;
+  display:flex;align-items:center;gap:6px;}
+.sat-toggle:hover{border-color:#5a9cf8;color:#5a9cf8;}
+.sat-toggle.active{background:#5a9cf8;color:#fff;border-color:#5a9cf8;}
+#sat-map{position:absolute;inset:0;z-index:5;display:none;overflow:hidden;}
+#sat-map .leaflet-popup-content-wrapper{background:#272b35;color:#eee;border-radius:8px;
+  box-shadow:0 4px 16px rgba(0,0,0,.4);}
+#sat-map .leaflet-popup-content{font-size:12px;line-height:1.6;font-family:'DM Sans',sans-serif;}
+#sat-map .leaflet-popup-tip{background:#272b35;}
+.leaflet-tooltip.sat-tip{background:rgba(39,43,53,.88);color:#fff;
+  border:1px solid rgba(255,255,255,.15);font-size:10px;padding:2px 6px;border-radius:4px;white-space:nowrap;}
 </style>
 </head>
 <body>
@@ -174,6 +190,8 @@ body.map-expanded .expand-lbl::before{content:'✕  Cerrar';}
 </div>
 
 <div class="map-wrap" id="map-wrap">
+  <div id="sat-map"></div>
+  <button id="sat-toggle" class="sat-toggle" onclick="toggleSat()">🛰️ Satélite</button>
   <svg id="map-svg" xmlns="http://www.w3.org/2000/svg"></svg>
   <svg class="compass" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
     <circle cx="22" cy="22" r="20" fill="rgba(40,44,56,0.75)" stroke="#585f75" stroke-width="1"/>
@@ -499,6 +517,100 @@ function renderDetail(lot){
       <div class="det-grp-ttl">Precio</div>
       <div class="det-row"><span class="det-k">Costo</span><span class="det-v mono">${fusd(lot.costo)}</span></div>
     </div>`;
+}
+
+// ── VISTA SATELITAL (estilo N65/N73 · Leaflet + tiles Esri) ──────────
+// Georreferencia afín DXF→lat/lon calibrada con los 8 puntos de control
+// A–H del DXF (capas "PUNTO A"…"PUNTO H"). Residual RMS ~1,47 m (máx 2,40 m).
+const TILE_URL = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+const _lat = [2.56068552181e-08, 8.89560791642e-06, -89.52430434];
+const _lon = [1.05548147183e-05, 5.21706255566e-08, -95.70234356];
+function svgToLL(x, y){
+  return [ _lat[0]*x + _lat[1]*y + _lat[2],
+           _lon[0]*x + _lon[1]*y + _lon[2] ];
+}
+let satMap = null, satLayerGroup = null, satPolys = [], satActive = false;
+
+function initSatMap(){
+  if (satMap) return;
+  const allPts = DATA.lots.flatMap(l => l.pts);
+  const cx = allPts.reduce((s,p)=>s+p[0],0)/allPts.length;
+  const cy = allPts.reduce((s,p)=>s+p[1],0)/allPts.length;
+  const [clat, clon] = svgToLL(cx, cy);
+
+  satMap = L.map('sat-map', { center:[clat,clon], zoom:17, zoomControl:true, preferCanvas:true });
+  L.tileLayer(TILE_URL, { attribution:'© Esri / Maxar', maxZoom:20, tileSize:256, keepBuffer:4 }).addTo(satMap);
+
+  satLayerGroup = L.layerGroup().addTo(satMap);
+  satPolys = [];
+  DATA.lots.forEach(lot => {
+    if (lot.estado === 'Sin datos') return;
+    const coords = lot.pts.map(p => svgToLL(p[0], p[1]));
+    const color  = SCHEMES.estado.colors[lot.estado] || '#888888';
+    const poly = L.polygon(coords, { color:'rgba(255,255,255,0.7)', weight:0.8, fillColor:color, fillOpacity:0.55 });
+
+    const fdate = v => { if(!v||v==='None'||v==='') return '—'; try{ const d=new Date(v); return String(d.getUTCMonth()+1).padStart(2,'0')+'/'+d.getUTCFullYear(); }catch(e){ return v; } };
+    const fusd  = v => (!v||v==0) ? '—' : 'USD '+parseFloat(v).toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:0});
+    const fm2   = v => (!v||v==0) ? '—' : parseFloat(v).toFixed(0)+' m²';
+
+    poly.bindPopup(`<div style="min-width:170px;font-family:'DM Sans',sans-serif">
+      <div style="font-weight:600;font-size:13px;margin-bottom:4px">${lot.nombre||('Mza '+lot.manzana+' · Lote '+lot.lote)}</div>
+      <div style="display:inline-flex;align-items:center;gap:5px;background:${color}28;color:${color};border:1px solid ${color}45;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:500;margin-bottom:7px">
+        <span style="width:5px;height:5px;border-radius:50%;background:${color};display:inline-block"></span>${lot.estado||'—'}
+      </div>
+      <table style="font-size:11px;width:100%;border-collapse:collapse">
+        <tr><td style="color:#888;padding:1px 0">Manzana</td><td style="text-align:right;font-weight:500">${lot.manzana||'—'}</td></tr>
+        <tr><td style="color:#888;padding:1px 0">Lote</td><td style="text-align:right;font-weight:500">${lot.lote||'—'}</td></tr>
+        <tr><td style="color:#888;padding:1px 0">Tipo</td><td style="text-align:right;font-weight:500">${lot.tipo_inmueble||'—'}</td></tr>
+        <tr><td style="color:#888;padding:1px 0">Terreno</td><td style="text-align:right;font-weight:500">${fm2(lot.m2_terreno)}</td></tr>
+        <tr><td style="color:#888;padding:1px 0">Construido</td><td style="text-align:right;font-weight:500">${fm2(lot.m2_construido)}</td></tr>
+        <tr><td style="color:#888;padding:1px 0">Entrega</td><td style="text-align:right;font-weight:500">${fdate(lot.fecha_entrega)}</td></tr>
+        <tr><td style="color:#888;padding:1px 0">Precio</td><td style="text-align:right;font-weight:500;color:#5a9cf8">${fusd(lot.costo)}</td></tr>
+      </table></div>`, { maxWidth:240 });
+    poly.bindTooltip(lot.manzana + '-' + lot.lote, { className:'sat-tip', sticky:true });
+    satLayerGroup.addLayer(poly);
+    satPolys.push(poly);
+  });
+
+  DATA.manzanas.forEach(mz => {
+    const cxm = mz.pts.reduce((s,p)=>s+p[0],0)/mz.pts.length;
+    const cym = mz.pts.reduce((s,p)=>s+p[1],0)/mz.pts.length;
+    const [lat, lon] = svgToLL(cxm, cym);
+    L.tooltip({ permanent:true, direction:'center', className:'sat-tip', interactive:false })
+      .setContent('<b>' + (mz.label||'') + '</b>').setLatLng([lat, lon]).addTo(satMap);
+  });
+
+  const allLL = DATA.lots.flatMap(l => l.pts.map(p => svgToLL(p[0], p[1])));
+  satMap.fitBounds(allLL, { padding:[20,20] });
+}
+
+function toggleSat(){
+  satActive = !satActive;
+  const btn = document.getElementById('sat-toggle');
+  const satDiv = document.getElementById('sat-map');
+  const svgEl = document.getElementById('map-svg');
+  const wrap = document.getElementById('map-wrap');
+  if (satActive) {
+    btn.classList.add('active');
+    btn.innerHTML = '🗺️ Plano';
+    satDiv.style.display = 'block';
+    satDiv.style.width  = wrap.offsetWidth  + 'px';
+    satDiv.style.height = wrap.offsetHeight + 'px';
+    wrap.style.overflow = 'visible';
+    svgEl.style.display = 'none';
+    document.querySelectorAll('.zoom-ctrls,.fit-btn,.expand-btn,.compass').forEach(el => el.style.visibility = 'hidden');
+    initSatMap();
+    setTimeout(()=>{ if(satMap) satMap.invalidateSize(true); }, 50);
+    setTimeout(()=>{ if(satMap) satMap.invalidateSize(true); }, 300);
+    setTimeout(()=>{ if(satMap) satMap.invalidateSize(true); }, 800);
+  } else {
+    btn.classList.remove('active');
+    btn.innerHTML = '🛰️ Satélite';
+    satDiv.style.display = 'none';
+    svgEl.style.display = '';
+    wrap.style.overflow = 'hidden';
+    document.querySelectorAll('.zoom-ctrls,.fit-btn,.expand-btn,.compass').forEach(el => el.style.visibility = '');
+  }
 }
 
 applyColors();
