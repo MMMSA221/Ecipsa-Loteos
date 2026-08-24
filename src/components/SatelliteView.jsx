@@ -23,23 +23,34 @@ function buildTransform(georef) {
   }
 }
 
-const ESTADO_COLORS = {
-  'Disponible': '#16a34a', 'Adjudicado': '#FB7520', 'Reservado': '#FB7520',
-  'Entregado': '#2563eb', 'Escriturado': '#7c3aed', 'No Disponible': '#64748b',
-}
 const TILE_URL = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
 const TILE_ATTR = '© Esri, Maxar'
 
-export default function SatelliteView({ lots, manzanas, georef, onSelect }) {
+export default function SatelliteView({
+  lots,          // lots ya procesados (mismos que la vista SVG)
+  manzanas,
+  greens = [],
+  georef,
+  colorOf,       // función (lot) => color, la misma que en la vista SVG
+  matches,       // función (lot) => bool, aplica filtros
+  selId,         // id del lote seleccionado
+  onSelect,      // callback cuando clickean un lote
+}) {
   const mapRef = useRef(null)
   const containerRef = useRef(null)
+  const layerLotsRef = useRef(null)      // capa de lotes (se recrea al cambiar color/filtros)
+  const layerMznsRef = useRef(null)      // capa de manzanas (una vez)
+  const layerGreensRef = useRef(null)    // capa de verdes (una vez)
+  const polyByIdRef = useRef(new Map())  // id → polygon para poder resaltar seleccionado
 
   const toLatLon = useMemo(() => buildTransform(georef), [georef])
 
+  /* ───── Crear mapa base UNA sola vez ───── */
   useEffect(() => {
-    if (mapRef.current) { mapRef.current.remove(); mapRef.current = null }
+    if (!containerRef.current || mapRef.current) return
 
     const allPts = lots.flatMap(l => l.pts)
+    if (allPts.length === 0) return
     const cx = allPts.reduce((s, p) => s + p[0], 0) / allPts.length
     const cy = allPts.reduce((s, p) => s + p[1], 0) / allPts.length
     const [clat, clon] = toLatLon(cx, cy)
@@ -51,41 +62,85 @@ export default function SatelliteView({ lots, manzanas, georef, onSelect }) {
     L.control.zoom({ position: 'bottomright' }).addTo(map)
     L.tileLayer(TILE_URL, { attribution: TILE_ATTR, maxZoom: 19 }).addTo(map)
 
-    // Manzana outlines
-    for (const m of manzanas) {
-      const coords = m.pts.map(([x, y]) => toLatLon(x, y))
-      L.polygon(coords, { color: '#fff', weight: 1.5, fillOpacity: 0, dashArray: '4 4' })
-        .addTo(map).bindTooltip(m.label, { permanent: false, className: 'sat-tip' })
-    }
+    // Capas de manzanas y verdes (no cambian con filtros)
+    layerMznsRef.current = L.layerGroup().addTo(map)
+    layerGreensRef.current = L.layerGroup().addTo(map)
+    layerLotsRef.current = L.layerGroup().addTo(map)
 
-    // Lots
-    for (const lot of lots) {
-      if (lot.tipo === 'verde') {
-        L.polygon(lot.pts.map(([x, y]) => toLatLon(x, y)), {
-          color: '#22c55e', weight: 1, fillColor: '#22c55e', fillOpacity: 0.3,
-        }).addTo(map)
-        continue
-      }
-      const color = ESTADO_COLORS[lot.estado] || '#475569'
-      const coords = lot.pts.map(([x, y]) => toLatLon(x, y))
-      const poly = L.polygon(coords, {
-        color: '#fff', weight: 0.7, fillColor: color, fillOpacity: 0.5,
-      }).addTo(map)
-      const info = [
-        `<b>Mza ${lot.manzana} · Lote ${lot.numero}</b>`,
-        lot.estado || '', lot.terreno ? `${lot.terreno} m²` : '',
-        lot.costo ? `USD ${lot.costo.toLocaleString()}` : '',
-      ].filter(Boolean).join('<br/>')
-      poly.bindPopup(info)
-      poly.bindTooltip(`${lot.manzana}-${lot.numero}`, { permanent: false, className: 'sat-tip' })
-      if (onSelect) poly.on('click', () => onSelect(lot))
-    }
-
+    // Ajustar bounds inicial
     const allLatLon = lots.flatMap(l => l.pts.map(([x, y]) => toLatLon(x, y)))
     if (allLatLon.length) map.fitBounds(allLatLon, { padding: [20, 20] })
 
-    return () => { map.remove(); mapRef.current = null }
-  }, [lots, manzanas, toLatLon, onSelect])
+    return () => {
+      if (mapRef.current) { mapRef.current.remove(); mapRef.current = null }
+      polyByIdRef.current.clear()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])  // solo al montar
 
-  return <div ref={containerRef} style={{ width: '100%', height: '100%', position: 'absolute', inset: 0, zIndex: 2 }} />
+  /* ───── Manzanas (una vez) ───── */
+  useEffect(() => {
+    if (!layerMznsRef.current) return
+    layerMznsRef.current.clearLayers()
+    for (const m of manzanas) {
+      const coords = m.pts.map(([x, y]) => toLatLon(x, y))
+      L.polygon(coords, { color: '#fff', weight: 1.5, fillOpacity: 0, dashArray: '4 4' })
+        .addTo(layerMznsRef.current)
+        .bindTooltip(m.label || '', { permanent: false, className: 'sat-tip' })
+    }
+  }, [manzanas, toLatLon])
+
+  /* ───── Espacios verdes (una vez) ───── */
+  useEffect(() => {
+    if (!layerGreensRef.current) return
+    layerGreensRef.current.clearLayers()
+    for (const g of greens) {
+      const coords = g.pts.map(([x, y]) => toLatLon(x, y))
+      L.polygon(coords, {
+        color: '#22c55e', weight: 1, fillColor: '#22c55e', fillOpacity: 0.3,
+      }).addTo(layerGreensRef.current)
+    }
+  }, [greens, toLatLon])
+
+  /* ───── Lotes: se re-renderizan cuando cambia colorMode, filtros o selección ───── */
+  useEffect(() => {
+    if (!layerLotsRef.current) return
+    layerLotsRef.current.clearLayers()
+    polyByIdRef.current.clear()
+
+    for (const lot of lots) {
+      const visible = matches ? matches(lot) : true
+      const color = colorOf ? colorOf(lot) : '#475569'
+      const isSel = selId === lot.id
+      const coords = lot.pts.map(([x, y]) => toLatLon(x, y))
+
+      const poly = L.polygon(coords, {
+        color: isSel ? '#ffff00' : '#fff',
+        weight: isSel ? 2.5 : 0.7,
+        fillColor: color,
+        fillOpacity: visible ? 0.65 : 0.08,
+        opacity: visible ? 1 : 0.25,
+      }).addTo(layerLotsRef.current)
+
+      const info = [
+        `<b>Mza ${lot.manzana} · Lote ${lot.lote || lot.numero}</b>`,
+        lot.estado || '',
+        lot.m2_terreno ? `${lot.m2_terreno} m²` : '',
+        lot.costo ? `USD ${Number(lot.costo).toLocaleString('es-AR')}` : '',
+      ].filter(Boolean).join('<br/>')
+      poly.bindPopup(info)
+      poly.bindTooltip(`${lot.manzana}-${lot.lote || lot.numero}`, {
+        permanent: false, className: 'sat-tip',
+      })
+      if (onSelect) poly.on('click', () => onSelect(lot))
+      polyByIdRef.current.set(lot.id, poly)
+    }
+  }, [lots, colorOf, matches, selId, toLatLon, onSelect])
+
+  return (
+    <div
+      ref={containerRef}
+      style={{ width: '100%', height: '100%', position: 'absolute', inset: 0, zIndex: 2 }}
+    />
+  )
 }
