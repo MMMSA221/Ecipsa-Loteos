@@ -30,8 +30,8 @@
   },
   {
     "codigo": "N62",
-    "nombre": "Carrodilla",
-    "nombre_full": "N62 Carrodilla",
+    "nombre": "Carrodilla I",
+    "nombre_full": "N62 Carrodilla - Etapa I",
     "ubicacion": "Luján de Cuyo",
     "ciudad": "Mendoza",
     "provincia": "Mendoza",
@@ -47,14 +47,14 @@
       "red_vial": 100
     },
     "kpis": {
-      "total": 204,
-      "disponibles": 15,
-      "reservados": 30,
-      "adjudicados": 106,
+      "total": 174,
+      "disponibles": 17,
+      "reservados": 44,
+      "adjudicados": 101,
       "entregados": 0,
       "escriturados": 0,
-      "no_disponible": 11,
-      "pct_comercializado": 52
+      "no_disponible": 12,
+      "pct_comercializado": 58
     }
   },
   {
@@ -67,7 +67,7 @@
     "estado_general": "En ejecución",
     "link_sitio": "",
     "link_pipeline": "",
-    "tablero_html": "",
+    "tablero_html": "N65.html",
     "infra": {
       "gas": 100,
       "agua": 100,
