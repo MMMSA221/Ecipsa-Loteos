@@ -114,6 +114,22 @@
       "link_sitio": "",
       "link_pipeline": "",
       "tablero_html": "N74.html"
+    },
+    {
+      "codigo": "N71",
+      "nombre": "San Agustín",
+      "nombre_full": "N71 San Agustín",
+      "ubicacion": "Salta",
+      "ciudad": "Salta",
+      "provincia": "Salta",
+      "estado_general": "En ejecución",
+      "excel": "",
+      "geo": "",
+      "merge_ab": false,
+      "pipeline": "",
+      "link_sitio": "",
+      "link_pipeline": "",
+      "tablero_html": "N71.html"
     }
   ]
 }
