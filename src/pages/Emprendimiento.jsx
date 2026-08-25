@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { supabase } from '../supabase'
+import { track } from '../tracking'
 import { getEmprendimiento } from '../data/loader'
 import MANIFEST from '../data/manifest.json'
 import SatelliteView from '../components/SatelliteView'
@@ -127,6 +128,7 @@ export default function Emprendimiento() {
     const m = MANIFEST.find(e => e.codigo === codigo)
     setInfra((m && m.infra) || {})
     setLoading(false)
+    track('abrir_emprendimiento', { emprendimiento: codigo })
   }, [codigo])
 
   /* ───────── BBox + transformaciones CAD → SVG ───────── */
@@ -277,6 +279,50 @@ export default function Emprendimiento() {
       <Link to="/" className="t-msg-link">← Volver a emprendimientos</Link>
     </div>
   )
+
+
+  /* ───────── Vista HTML standalone (Fernando) ───────── */
+  const mEntry = MANIFEST.find(e => e.codigo === codigo)
+  const htmlFile = mEntry?.tablero_html
+  if (htmlFile) {
+    const base = import.meta.env.BASE_URL || '/'
+    const src = `${base}tableros/${htmlFile}`
+    const mInfra = mEntry?.infra || {}
+    const infraItems = INFRA_ITEMS.filter(i => mInfra[i.tipo] != null)
+    const infraAvg = infraItems.length ? Math.round(infraItems.reduce((s, i) => s + (mInfra[i.tipo] || 0), 0) / infraItems.length) : null
+    return (
+      <div className="tablero" style={{ display: 'flex', flexDirection: 'column' }}>
+        <header className="t-header" style={{ flexShrink: 0 }}>
+          <Link to="/" className="t-back" title="Volver a emprendimientos">←</Link>
+          <div className="t-logo">{codigo}</div>
+          <div className="t-titles">
+            <div className="t-title-main">{emp?.nombre_full || emp?.nombre || codigo}</div>
+            <div className="t-title-sub">{[emp?.ubicacion, emp?.ciudad, emp?.provincia].filter(Boolean).join(', ')}</div>
+          </div>
+          {infraAvg != null && (
+            <div className="t-infra-badge" title={infraItems.map(i => `${i.name}: ${mInfra[i.tipo]}%`).join('\n')}>
+              <span style={{ color: infraAvg === 100 ? '#16a34a' : '#FB7520', fontWeight: 700 }}>{infraAvg}%</span>
+              <span style={{ fontSize: 10, opacity: 0.7 }}>Infra</span>
+            </div>
+          )}
+          <div className="t-spacer" />
+          <button className="t-logout" onClick={logout}>Salir</button>
+        </header>
+        {infraItems.length > 0 && (
+          <div className="t-infra-ribbon">
+            {infraItems.map(i => (
+              <div key={i.tipo} className="t-infra-ribbon-item">
+                <InfraIcon tipo={i.tipo} color={i.color} size={14} />
+                <span className="t-infra-ribbon-name">{i.short}</span>
+                <span className="t-infra-ribbon-pct" style={{ color: mInfra[i.tipo] === 100 ? '#16a34a' : i.color }}>{mInfra[i.tipo]}%</span>
+              </div>
+            ))}
+          </div>
+        )}
+        <iframe src={src} style={{ flex: 1, border: 'none', width: '100%', minHeight: 0 }} title={`Tablero ${codigo}`} />
+      </div>
+    )
+  }
 
   const hasComercial = lots.some(l => l.estadoRaw)
 
