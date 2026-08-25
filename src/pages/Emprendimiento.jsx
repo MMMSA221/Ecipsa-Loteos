@@ -1,6 +1,5 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { track } from '../tracking'
 import { supabase } from '../supabase'
 import { getEmprendimiento } from '../data/loader'
 import MANIFEST from '../data/manifest.json'
@@ -128,7 +127,6 @@ export default function Emprendimiento() {
     const m = MANIFEST.find(e => e.codigo === codigo)
     setInfra((m && m.infra) || {})
     setLoading(false)
-    track('abrir_emprendimiento', { emprendimiento: codigo })
   }, [codigo])
 
   /* ───────── BBox + transformaciones CAD → SVG ───────── */
@@ -280,49 +278,6 @@ export default function Emprendimiento() {
     </div>
   )
 
-  /* ───────── Vista HTML standalone (Fernando/Lucía) ───────── */
-  const mEntry = MANIFEST.find(e => e.codigo === codigo)
-  const htmlFile = mEntry?.tablero_html
-  if (htmlFile) {
-    const base = import.meta.env.BASE_URL || '/'
-    const src = `${base}tableros/${htmlFile}`
-    const infra = mEntry?.infra || {}
-    const infraItems = INFRA_ITEMS.filter(i => infra[i.tipo] != null)
-    const infraAvg = infraItems.length ? Math.round(infraItems.reduce((s, i) => s + (infra[i.tipo] || 0), 0) / infraItems.length) : null
-    return (
-      <div className="tablero" style={{ display: 'flex', flexDirection: 'column' }}>
-        <header className="t-header" style={{ flexShrink: 0 }}>
-          <Link to="/" className="t-back" title="Volver a emprendimientos">←</Link>
-          <div className="t-logo">{codigo}</div>
-          <div className="t-titles">
-            <div className="t-title-main">{emp?.nombre_full || emp?.nombre || codigo}</div>
-            <div className="t-title-sub">{[emp?.ubicacion, emp?.ciudad, emp?.provincia].filter(Boolean).join(', ')}</div>
-          </div>
-          {infraAvg != null && (
-            <div className="t-infra-badge" title={infraItems.map(i => `${i.name}: ${infra[i.tipo]}%`).join('\n')}>
-              <span style={{ color: infraAvg === 100 ? '#16a34a' : '#FB7520', fontWeight: 700 }}>{infraAvg}%</span>
-              <span style={{ fontSize: 10, opacity: 0.7 }}>Infra</span>
-            </div>
-          )}
-          <div className="t-spacer" />
-          <button className="t-logout" onClick={logout}>Salir</button>
-        </header>
-        {infraItems.length > 0 && (
-          <div className="t-infra-ribbon">
-            {infraItems.map(i => (
-              <div key={i.tipo} className="t-infra-ribbon-item">
-                <InfraIcon tipo={i.tipo} color={i.color} size={14} />
-                <span className="t-infra-ribbon-name">{i.short}</span>
-                <span className="t-infra-ribbon-pct" style={{ color: infra[i.tipo] === 100 ? '#16a34a' : i.color }}>{infra[i.tipo]}%</span>
-              </div>
-            ))}
-          </div>
-        )}
-        <iframe src={src} style={{ flex: 1, border: 'none', width: '100%', minHeight: 0 }} title={`Tablero ${codigo}`} />
-      </div>
-    )
-  }
-
   const hasComercial = lots.some(l => l.estadoRaw)
 
   return (
@@ -464,18 +419,7 @@ export default function Emprendimiento() {
                       <polygon
                         className={'t-lot' + (!matches(l) ? ' dimmed' : '') + (selId === l.id ? ' sel' : '')}
                         points={tf.p2s(l.pts)} fill={colorOf(l)} fillOpacity="0.82"
-                        onClick={e => {
-  e.stopPropagation();
-  if (!movedRef.current) {
-    setSelId(l.id);
-    track('ver_lote', {
-      emprendimiento: codigo,
-      manzana: l.manzana,
-      lote: l.lote,
-      detalle: { estado: l.estado, costo: l.costo }
-    });
-  }
-}} />
+                        onClick={e => { e.stopPropagation(); if (!movedRef.current) setSelId(l.id) }} />
                       <text className="t-lotlbl" x={tf.tx(cx)} y={tf.ty(cy)}>{l.lote}</text>
                     </g>
                   )
@@ -484,27 +428,26 @@ export default function Emprendimiento() {
             </>)}
           </svg>
           {satView && georef && (
-  {satView && georef && (
-  <SatelliteView
-    key={`${colorMode}-${JSON.stringify([...legendFilters])}-${fTipo}-${fNegocio}-${fEtapa}-${fAvance}-${fManzana}-${selId}`}
-    lots={lots}
-    manzanas={mzns}
-    greens={greens}
-    georef={georef}
-    colorOf={colorOf}
-    matches={matches}
-    selId={selId}
-    onSelect={(l) => {
-      setSelId(l.id);
-      track('ver_lote', {
-        emprendimiento: codigo,
-        manzana: l.manzana,
-        lote: l.lote,
-        detalle: { estado: l.estado, costo: l.costo, origen: 'satelite' }
-      });
-    }}
-  />
-)}
+            <SatelliteView
+              key={`${colorMode}-${JSON.stringify([...legendFilters])}-${fTipo}-${fNegocio}-${fEtapa}-${fAvance}-${fManzana}-${selId}`}
+              lots={lots}
+              manzanas={mzns}
+              greens={greens}
+              georef={georef}
+              colorOf={colorOf}
+              matches={matches}
+              selId={selId}
+              onSelect={(l) => {
+                setSelId(l.id);
+                track('ver_lote', {
+                  emprendimiento: codigo,
+                  manzana: l.manzana,
+                  lote: l.lote,
+                  detalle: { estado: l.estado, costo: l.costo, origen: 'satelite' }
+                });
+              }}
+            />
+          )}
           {georef && (
             <button className="t-sat-toggle" onClick={() => setSatView(!satView)}>
               {satView ? '🗺️ Plano' : '🛰️ Satélite'}
