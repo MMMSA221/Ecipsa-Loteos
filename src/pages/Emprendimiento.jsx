@@ -484,7 +484,9 @@ export default function Emprendimiento() {
             </>)}
           </svg>
           {satView && georef && (
+  {satView && georef && (
   <SatelliteView
+    key={`${colorMode}-${JSON.stringify([...legendFilters])}-${fTipo}-${fNegocio}-${fEtapa}-${fAvance}-${fManzana}-${selId}`}
     lots={lots}
     manzanas={mzns}
     greens={greens}
