@@ -273,14 +273,6 @@ export default function Emprendimiento() {
   if (loading) return (
     <div className="tablero tablero-msg"><div className="t-spinner" /><p>Cargando {codigo}…</p></div>
   )
-  if (notFound) return (
-    <div className="tablero tablero-msg">
-      <p>No encontramos el emprendimiento <strong>{codigo}</strong>.</p>
-      <Link to="/" className="t-msg-link">← Volver a emprendimientos</Link>
-    </div>
-  )
-
-
   /* ───────── Vista HTML standalone (Fernando) ───────── */
   const mEntry = MANIFEST.find(e => e.codigo === codigo)
   const htmlFile = mEntry?.tablero_html
@@ -323,6 +315,16 @@ export default function Emprendimiento() {
       </div>
     )
   }
+
+
+  if (notFound) return (
+    <div className="tablero tablero-msg">
+      <p>No encontramos el emprendimiento <strong>{codigo}</strong>.</p>
+      <Link to="/" className="t-msg-link">← Volver a emprendimientos</Link>
+    </div>
+  )
+
+
 
   const hasComercial = lots.some(l => l.estadoRaw)
 
