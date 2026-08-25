@@ -32,9 +32,6 @@ const fmtDate = v => {
 const centroid = pts => { const n = pts.length; return [pts.reduce((a, p) => a + p[0], 0) / n, pts.reduce((a, p) => a + p[1], 0) / n] }
 const baseNum = s => { const m = /^([0-9]+)/.exec(s); return m ? m[1] : s }
 
-// Extrae (manzana, lote) del campo "Nombre".
-// Si la obra define manzana_rules (N65, N74), aplica esas reglas para que el nombre
-// del Excel coincida con el del plano. Si no, usa el patrón "Lote N - Mza X" estándar.
 function extractMznLote(nom, rules) {
   if (!nom) return [null, null]
   if (rules && rules.length) {
@@ -102,6 +99,14 @@ function readExcel(file, mergeAb, rules) {
 }
 
 function build(emp, infraMap) {
+  // Si tiene tablero_html pero no tiene geo/excel, devolver solo metadata
+  if (emp.tablero_html && (!emp.geo || !emp.excel)) {
+    const keep = ['codigo', 'nombre', 'nombre_full', 'ubicacion', 'ciudad', 'provincia', 'estado_general', 'link_sitio', 'link_pipeline', 'tablero_html']
+    const empMeta = {}; keep.forEach(k => { empMeta[k] = emp[k] })
+    console.log(`  ${emp.codigo}: solo tablero HTML (sin geo/excel)`)
+    return { ...empMeta, infra: infraMap[(emp.pipeline || '').trim()] || {}, kpis: {} }
+  }
+
   const cod = emp.codigo
   const geo = JSON.parse(fs.readFileSync(path.join(SRC, emp.geo), 'utf-8'))
   const geoLots = geo.lots || []
@@ -109,7 +114,7 @@ function build(emp, infraMap) {
   const greenMznRe = emp.green_manzana ? new RegExp(emp.green_manzana, 'i') : null
 
   const lots = []; let matched = 0
-  const usedKeys = new Set(); const pending = []  // geo lotes sin match (para fallback)
+  const usedKeys = new Set(); const pending = []
   for (const l of geoLots) {
     const mzn = String(l.manzana).toUpperCase(), num = String(l.lote).toUpperCase()
     let [cx, cy] = [l.cx, l.cy]
@@ -129,8 +134,6 @@ function build(emp, infraMap) {
     }
   }
 
-  // Fallback opcional (N74): cuando el plano rotula los sublotes distinto al Excel,
-  // empareja por (manzana, número base) SOLO si queda 1 polígono y 1 fila sin usar.
   let byFallback = 0
   if (emp.lote_fallback && pending.length) {
     const remExcel = {}
