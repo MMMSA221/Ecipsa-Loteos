@@ -559,6 +559,7 @@ function toggleSat() {
     svgEl.style.display = 'none';
     document.querySelectorAll('.zoom-ctrls,.fit-btn,.expand-btn,.compass').forEach(el => el.style.visibility = 'hidden');
     initSatMap();
+    updateFilters();   // ← aplica el filtro vigente ni bien se abre el satélite
     // Invalidar tamaño en cascada para asegurar render completo
     setTimeout(() => { if (satMap) { satMap.invalidateSize(true); } }, 50);
     setTimeout(() => { if (satMap) { satMap.invalidateSize(true); } }, 300);

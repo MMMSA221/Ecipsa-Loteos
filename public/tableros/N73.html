@@ -556,6 +556,25 @@ function updateFilters() {
   document.getElementById('kpi-ent-q').textContent=ent;
   document.getElementById('kpi-ent-usd').textContent=fmtUSD(entUSD);
   buildLegend();
+  syncSatFilters();   // ← replica el filtro en la vista satélite si está activa
+}
+
+// ── PATRÓN SATÉLITE+FILTROS (replicable) ─────────────────────────────
+// Reaplica el mismo filtro del plano a los polígonos Leaflet del satélite.
+// Requiere: (1) poly._lot = lot al crear cada polígono; (2) esta función
+// llamada al final de updateFilters() y al abrir el satélite en toggleSat().
+function syncSatFilters(){
+  if(!satActive || !satPolys.length) return;
+  satPolys.forEach(poly=>{
+    const lot = poly._lot;
+    if(!lot) return;
+    const pass = lotMatches(lot);
+    poly.setStyle({
+      fillColor:   getColor(lot),          // ← respeta el modo de color activo (estado/tipo/estilo)
+      fillOpacity: pass ? 0.55 : 0.04,
+      opacity:     pass ? 1    : 0.15
+    });
+  });
 }
 
 // Populate single selects
@@ -738,6 +757,7 @@ function drawSatFeatures() {
         <tr><td style="color:#888;padding:1px 0">Precio</td><td style="text-align:right;font-weight:500;color:#5a9cf8">${fusd(lot.costo)}</td></tr>
       </table></div>`, { maxWidth:240 });
     poly.bindTooltip(lot.manzana + '-' + lot.lote, { className:'sat-tip', sticky:true });
+    poly._lot = lot;                 // ← ref al lote para poder filtrar en satélite
     satLayerGroup.addLayer(poly);
     satPolys.push(poly);
   });
@@ -770,6 +790,7 @@ function toggleSat() {
     svgEl.style.display = 'none';
     document.querySelectorAll('.zoom-ctrls,.fit-btn,.expand-btn,.compass').forEach(el => el.style.visibility = 'hidden');
     initSatMap();
+    syncSatFilters();   // ← aplica el filtro vigente ni bien se abre el satélite
     setTimeout(()=>{ if(satMap) satMap.invalidateSize(true); }, 50);
     setTimeout(()=>{ if(satMap) satMap.invalidateSize(true); }, 300);
     setTimeout(()=>{ if(satMap) satMap.invalidateSize(true); }, 800);
