@@ -103,8 +103,10 @@ function build(emp, infraMap) {
   if (emp.tablero_html && (!emp.geo || !emp.excel)) {
     const keep = ['codigo', 'nombre', 'nombre_full', 'ubicacion', 'ciudad', 'provincia', 'estado_general', 'link_sitio', 'link_pipeline', 'tablero_html']
     const empMeta = {}; keep.forEach(k => { empMeta[k] = emp[k] })
-    console.log(`  ${emp.codigo}: solo tablero HTML (sin geo/excel)`)
-    return { ...empMeta, infra: infraMap[(emp.pipeline || '').trim()] || {}, kpis: {} }
+    const kpis = emp.manual_kpis || {}
+    if (kpis.total) kpis.pct_comercializado = Math.round((1 - (kpis.disponibles || 0) / kpis.total) * 1000) / 10
+    console.log(`  ${emp.codigo}: solo tablero HTML (sin geo/excel)` + (kpis.total ? ` · ${kpis.total} lotes (manual)` : ''))
+    return { ...empMeta, infra: infraMap[(emp.pipeline || '').trim()] || {}, kpis }
   }
 
   const cod = emp.codigo
