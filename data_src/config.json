@@ -129,7 +129,14 @@
       "pipeline": "",
       "link_sitio": "",
       "link_pipeline": "",
-      "tablero_html": "N71.html"
+      "tablero_html": "N71.html",
+      "manual_kpis": {
+        "total": 156,
+        "disponibles": 26,
+        "adjudicados": 72,
+        "entregados": 0,
+        "no_disponible": 35
+      }
     }
   ]
 }
