@@ -29,7 +29,7 @@
       "excel": "06_2026_Natania_62.xlsx",
       "geo": "N62_geo.json",
       "merge_ab": true,
-      "pipeline": "N62 - Carrodilla Sector Sur - Etapa I",
+      "pipeline": "N62 - Carrodilla Sector Sur",
       "link_sitio": "",
       "link_pipeline": "",
       "georef": [
@@ -126,7 +126,7 @@
       "excel": "",
       "geo": "",
       "merge_ab": false,
-      "pipeline": "",
+      "pipeline": "N71 - Camino a San Agustín",
       "link_sitio": "",
       "link_pipeline": "",
       "tablero_html": "N71.html",
