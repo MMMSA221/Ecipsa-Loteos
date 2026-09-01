@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>N65 · Meglioli — Tablero de Stock y Obra</title>
+<title>Natania 360 · N65 Meglioli</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#363b48;--surface:#3f4453;--surface2:#474d5f;--surface3:#50566a;--border:#585f75;--border2:#626a82;--accent:#5a9cf8;--text:#eaecf4;--text2:#b8bfd4;--text3:#8b93ab;}
@@ -124,8 +124,8 @@ body.map-expanded .expand-lbl::before{content:'✕  Cerrar';}
 <header>
   <div class="logo">N65</div>
   <div class="header-titles">
-    <div class="header-main">N65 Meglioli · Tablero de Stock y Obra</div>
-    <div class="header-sub">San Juan, Argentina · Rivadavia</div>
+    <div class="header-main">Natania 360</div>
+    <div class="header-sub">N65 · Meglioli — San Juan, Rivadavia</div>
   </div>
 </header>
 <div class="kpi-bar">
@@ -559,7 +559,6 @@ function toggleSat() {
     svgEl.style.display = 'none';
     document.querySelectorAll('.zoom-ctrls,.fit-btn,.expand-btn,.compass').forEach(el => el.style.visibility = 'hidden');
     initSatMap();
-    updateFilters();   // ← aplica el filtro vigente ni bien se abre el satélite
     // Invalidar tamaño en cascada para asegurar render completo
     setTimeout(() => { if (satMap) { satMap.invalidateSize(true); } }, 50);
     setTimeout(() => { if (satMap) { satMap.invalidateSize(true); } }, 300);

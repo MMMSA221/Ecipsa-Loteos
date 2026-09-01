@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>N73 · Nuevo Maipú — Tablero de Stock y Obra</title>
+<title>Natania 360 · N73 Nuevo Maipú</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -200,8 +200,8 @@ body.map-expanded .expand-lbl::before { content:'✕  Cerrar'; }
 <header>
   <div class="logo">N73</div>
   <div class="header-titles">
-    <div class="header-main">N73 Nuevo Maipú · Tablero de Stock y Obra</div>
-    <div class="header-sub">Mendoza, Argentina</div>
+    <div class="header-main">Natania 360</div>
+    <div class="header-sub">N73 · Nuevo Maipú — Mendoza</div>
   </div>
 </header>
 
@@ -556,25 +556,6 @@ function updateFilters() {
   document.getElementById('kpi-ent-q').textContent=ent;
   document.getElementById('kpi-ent-usd').textContent=fmtUSD(entUSD);
   buildLegend();
-  syncSatFilters();   // ← replica el filtro en la vista satélite si está activa
-}
-
-// ── PATRÓN SATÉLITE+FILTROS (replicable) ─────────────────────────────
-// Reaplica el mismo filtro del plano a los polígonos Leaflet del satélite.
-// Requiere: (1) poly._lot = lot al crear cada polígono; (2) esta función
-// llamada al final de updateFilters() y al abrir el satélite en toggleSat().
-function syncSatFilters(){
-  if(!satActive || !satPolys.length) return;
-  satPolys.forEach(poly=>{
-    const lot = poly._lot;
-    if(!lot) return;
-    const pass = lotMatches(lot);
-    poly.setStyle({
-      fillColor:   getColor(lot),          // ← respeta el modo de color activo (estado/tipo/estilo)
-      fillOpacity: pass ? 0.55 : 0.04,
-      opacity:     pass ? 1    : 0.15
-    });
-  });
 }
 
 // Populate single selects
@@ -702,13 +683,13 @@ function renderDetail(lot) {
 // Georreferencia por afinidad DXF→lat/lon, ajustada con los 6 puntos de
 // control A–F del DXF (capas "PUNTO A"…"PUNTO F"). Residual ~2,3 m.
 const TILE_URL = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
-const _lat = [1.55301967750e-7, 0.00000910522404596, -91.1925481289];
-const _lon = [0.0000107169385636, -4.40095182077e-8, -95.5518925609];
+const _lat = [6.4749369161e-08, 9.29498388758e-06, -92.1691768228];
+const _lon = [1.07777198519e-05, 2.3697063931e-08, -96.1354809955];
 function svgToLL(x, y) {
   return [ _lat[0]*x + _lat[1]*y + _lat[2],
            _lon[0]*x + _lon[1]*y + _lon[2] ];
 }
-let satMap = null, satLayerGroup = null, satLabelLayer = null, satPolys = [], satActive = false;
+let satMap = null, satLayerGroup = null, satPolys = [], satActive = false;
 
 function initSatMap() {
   if (satMap) return;
@@ -719,19 +700,8 @@ function initSatMap() {
 
   satMap = L.map('sat-map', { center:[clat,clon], zoom:17, zoomControl:true, preferCanvas:true });
   L.tileLayer(TILE_URL, { attribution:'© Esri / Maxar', maxZoom:20, tileSize:256, keepBuffer:4 }).addTo(satMap);
+
   satLayerGroup = L.layerGroup().addTo(satMap);
-  satLabelLayer = L.layerGroup().addTo(satMap);
-
-  drawSatFeatures();
-  const allLL = DATA.lots.flatMap(l => l.pts.map(p => svgToLL(p[0], p[1])));
-  satMap.fitBounds(allLL, { padding:[20,20] });
-}
-
-// Dibuja (o redibuja) lotes + etiquetas usando la transformación actual _lat/_lon
-function drawSatFeatures() {
-  if (!satMap) return;
-  satLayerGroup.clearLayers();
-  satLabelLayer.clearLayers();
   satPolys = [];
   DATA.lots.forEach(lot => {
     const coords = lot.pts.map(p => svgToLL(p[0], p[1]));
@@ -757,7 +727,6 @@ function drawSatFeatures() {
         <tr><td style="color:#888;padding:1px 0">Precio</td><td style="text-align:right;font-weight:500;color:#5a9cf8">${fusd(lot.costo)}</td></tr>
       </table></div>`, { maxWidth:240 });
     poly.bindTooltip(lot.manzana + '-' + lot.lote, { className:'sat-tip', sticky:true });
-    poly._lot = lot;                 // ← ref al lote para poder filtrar en satélite
     satLayerGroup.addLayer(poly);
     satPolys.push(poly);
   });
@@ -766,11 +735,12 @@ function drawSatFeatures() {
     const cxm = mz.pts.reduce((s,p)=>s+p[0],0)/mz.pts.length;
     const cym = mz.pts.reduce((s,p)=>s+p[1],0)/mz.pts.length;
     const [lat, lon] = svgToLL(cxm, cym);
-    satLabelLayer.addLayer(
-      L.tooltip({ permanent:true, direction:'center', className:'sat-tip', interactive:false })
-        .setContent('<b>' + (mz.label||'') + '</b>').setLatLng([lat, lon])
-    );
+    L.tooltip({ permanent:true, direction:'center', className:'sat-tip', interactive:false })
+      .setContent('<b>' + (mz.label||'') + '</b>').setLatLng([lat, lon]).addTo(satMap);
   });
+
+  const allLL = DATA.lots.flatMap(l => l.pts.map(p => svgToLL(p[0], p[1])));
+  satMap.fitBounds(allLL, { padding:[20,20] });
 }
 
 function toggleSat() {
@@ -781,7 +751,6 @@ function toggleSat() {
   const wrap = document.getElementById('map-wrap');
   if (satActive) {
     btn.classList.add('active');
-    document.body.classList.add('sat-on');
     btn.innerHTML = '🗺️ Plano';
     satDiv.style.display = 'block';
     satDiv.style.width  = wrap.offsetWidth  + 'px';
@@ -790,13 +759,11 @@ function toggleSat() {
     svgEl.style.display = 'none';
     document.querySelectorAll('.zoom-ctrls,.fit-btn,.expand-btn,.compass').forEach(el => el.style.visibility = 'hidden');
     initSatMap();
-    syncSatFilters();   // ← aplica el filtro vigente ni bien se abre el satélite
     setTimeout(()=>{ if(satMap) satMap.invalidateSize(true); }, 50);
     setTimeout(()=>{ if(satMap) satMap.invalidateSize(true); }, 300);
     setTimeout(()=>{ if(satMap) satMap.invalidateSize(true); }, 800);
   } else {
     btn.classList.remove('active');
-    document.body.classList.remove('sat-on');
     btn.innerHTML = '🛰️ Satélite';
     satDiv.style.display = 'none';
     svgEl.style.display = '';
@@ -807,6 +774,8 @@ function toggleSat() {
 
 applyColors();
 updateFilters();
+
+// Cambio 5: Ampliar mapa
 document.getElementById('expand-btn').addEventListener('click',()=>{
   document.body.classList.toggle('map-expanded');
   setTimeout(fitView, 50);
