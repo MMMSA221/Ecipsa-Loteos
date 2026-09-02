@@ -51,6 +51,7 @@ export default function Navbar() {
           alt="Grupo ECIPSA"
           style={{ height: 32, width: 'auto' }}
         />
+        <span style={{ fontWeight: 700, fontSize: 15, color: '#0e1525', letterSpacing: '.01em' }}>Natania 360</span>
       </Link>
       <div className="navbar-spacer" />
 
