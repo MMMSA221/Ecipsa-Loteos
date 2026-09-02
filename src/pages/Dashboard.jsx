@@ -52,7 +52,7 @@ export default function Dashboard() {
         <div className="dash-main">
           <div className="page-header">
             <div>
-              <h1 className="page-title">Emprendimientos</h1>
+              <h1 className="page-title">Natania 360</h1>
               <p className="page-sub">
                 {emps.length} desarrollos · {totalLotes} lotes · {totalDisp} disponibles
                 {activeProv && <span className="dash-filter-tag"> · Filtro: {activeProv}</span>}
