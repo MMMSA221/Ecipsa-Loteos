@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Natania 360 · N71 San Agustín</title>
+<title>N71 · San Agustín — Tablero de Stock y Obra</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -181,8 +181,10 @@ body.map-expanded .expand-lbl::before { content:'✕  Cerrar'; }
 
 <!-- HEADER -->
 <header>
+  <div class="logo">N71</div>
   <div class="header-titles">
-    <div class="header-main">Natania 360</div>
+    <div class="header-main">N71 San Agustín · Tablero de Stock y Obra</div>
+    <div class="header-sub">Salta, Argentina</div>
   </div>
 </header>
 
@@ -337,6 +339,31 @@ const DATA = {
   lots: RAW_DATA.lots.map(l => ({ ...l, estado: normalizeEstado(l.estado) }))
 };
 
+// ── SANEO DE CAPA DE LOTES (cruce DXF↔Excel) ─────────────────────────
+// Algunos polígonos del DXF a escala de manzana/franja entran por error
+// como "lotes" y, al no matchear el Excel, quedan como "Sin datos" TAPANDO
+// los lotes reales que tienen debajo e interceptando su clic. Se sacan de
+// la capa interactiva: un lote-hoja no puede contener a otro lote ni tener
+// superficie de manzana. Los contornos de manzana ya viven en DATA.manzanas.
+(function saneaLotes(){
+  const areaOf = pts => { let a=0,n=pts.length; for(let i=0;i<n;i++){const [x1,y1]=pts[i],[x2,y2]=pts[(i+1)%n];a+=x1*y2-x2*y1;} return Math.abs(a)/2; };
+  const centroidOf = pts => [pts.reduce((s,p)=>s+p[0],0)/pts.length, pts.reduce((s,p)=>s+p[1],0)/pts.length];
+  const inPoly = (pt,poly) => { const [x,y]=pt; let ins=false,n=poly.length,j=n-1;
+    for(let i=0;i<n;i++){ const [xi,yi]=poly[i],[xj,yj]=poly[j];
+      if(((yi>y)!==(yj>y)) && (x < (xj-xi)*(y-yi)/((yj-yi)||1e-12)+xi)) ins=!ins; j=i; } return ins; };
+  const cents = DATA.lots.map(l=>centroidOf(l.pts));
+  // Un polígono es "franja/manzana" (overlay que tapa) SOLO si, siendo "Sin datos",
+  // contiene adentro el centroide de otro lote. NO se usa umbral de área: un macrolote
+  // grande sin sublotes adentro (ej. Mza C-3, C-4) NO es overlay y debe seguir visible.
+  const esOverlay = (l,idx) => {
+    if(l.estado!=='Sin datos') return false;              // los lotes con datos nunca se tocan
+    return DATA.lots.some((o,j)=> j!==idx && inPoly(cents[j], l.pts)); // contiene otros lotes
+  };
+  DATA._overlays = DATA.lots.filter(esOverlay);
+  DATA.lots      = DATA.lots.filter((l,i)=>!esOverlay(l,i));
+  console.log(`[saneo] overlays de manzana removidos de la capa de lotes: ${DATA._overlays.length} · lotes interactivos: ${DATA.lots.length}`);
+})();
+
 const SCHEMES = {
   estado: {
     getKey: l => l.estado,
@@ -405,13 +432,20 @@ DATA.manzanas.forEach(mz=>{
 svg.appendChild(mzG);
 
 // Lot polygons
+// Orden de dibujo: primero los polígonos grandes (quedan abajo) y al final los
+// chicos (quedan arriba), para que un lote nunca sea tapado por una parcela mayor.
+// lotEls se indexa por el índice original del lote (i), así el resto del código
+// (selectLot, applyColors, updateFilters) sigue funcionando por índice.
+const lotArea = pts => { let a=0,n=pts.length; for(let k=0;k<n;k++){const [x1,y1]=pts[k],[x2,y2]=pts[(k+1)%n];a+=x1*y2-x2*y1;} return Math.abs(a)/2; };
 const lotG=document.createElementNS('http://www.w3.org/2000/svg','g');
-const lotEls=[];
-DATA.lots.forEach((lot,i)=>{
+const lotEls=new Array(DATA.lots.length);
+const drawOrder=DATA.lots.map((l,i)=>i).sort((a,b)=>lotArea(DATA.lots[b].pts)-lotArea(DATA.lots[a].pts));
+drawOrder.forEach(i=>{
+  const lot=DATA.lots[i];
   const poly=document.createElementNS('http://www.w3.org/2000/svg','polygon');
   poly.setAttribute('points',p2s(lot.pts)); poly.setAttribute('class','lot-poly');
   poly.addEventListener('click',()=>selectLot(i));
-  lotG.appendChild(poly); lotEls.push(poly);
+  lotG.appendChild(poly); lotEls[i]=poly;
   const cx=lot.pts.reduce((s,p)=>s+p[0],0)/lot.pts.length;
   const cy=lot.pts.reduce((s,p)=>s+p[1],0)/lot.pts.length;
   const lbl=document.createElementNS('http://www.w3.org/2000/svg','text');
