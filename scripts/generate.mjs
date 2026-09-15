@@ -98,6 +98,7 @@ function readExcel(file, mergeAb, rules) {
   return out
 }
 
+const BUILD_DATE = (d => `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`)(new Date())
 function build(emp, infraMap) {
   // Si tiene tablero_html pero no tiene geo/excel, devolver solo metadata
   if (emp.tablero_html && (!emp.geo || !emp.excel)) {
@@ -106,7 +107,7 @@ function build(emp, infraMap) {
     const kpis = emp.manual_kpis || {}
     if (kpis.total) kpis.pct_comercializado = Math.round((1 - (kpis.disponibles || 0) / kpis.total) * 1000) / 10
     console.log(`  ${emp.codigo}: solo tablero HTML (sin geo/excel)` + (kpis.total ? ` · ${kpis.total} lotes (manual)` : ''))
-    return { ...empMeta, infra: infraMap[(emp.pipeline || '').trim()] || {}, kpis }
+    return { ...empMeta, actualizado: BUILD_DATE, infra: infraMap[(emp.pipeline || '').trim()] || {}, kpis }
   }
 
   const cod = emp.codigo
@@ -173,7 +174,7 @@ function build(emp, infraMap) {
   }
   const fb = byFallback ? ` (+${byFallback} x descarte)` : ''
   console.log(`  ${cod}: ${total} lotes · ${matched} con datos${fb} · ${lots.length - total} verdes · Excel sin polígono ${skipped}`)
-  return { ...empMeta, infra: infraMap[(emp.pipeline || '').trim()] || {}, kpis }
+  return { ...empMeta, actualizado: BUILD_DATE, infra: infraMap[(emp.pipeline || '').trim()] || {}, kpis }
 }
 
 function readInfra(file) {
@@ -210,6 +211,8 @@ function readInfra(file) {
         const raw = s.pCol >= 0 ? row[s.pCol] : null
         const n = (raw === null || raw === '' || isNaN(parseFloat(raw))) ? 0 : parseFloat(raw)
         infra[s.key] = n > 1.0001 ? Math.round(n) : Math.round(n * 100)
+      } else if (tiene === 'no') {
+        infra[s.key] = false   // "No tiene" — se muestra como texto, no como %
       }
     }
     map[id] = infra
