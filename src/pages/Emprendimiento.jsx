@@ -281,7 +281,23 @@ export default function Emprendimiento() {
     const src = `${base}tableros/${htmlFile}`
     const mInfra = mEntry?.infra || {}
     const infraItems = INFRA_ITEMS.filter(i => mInfra[i.tipo] != null)
-    const infraAvg = infraItems.length ? Math.round(infraItems.reduce((s, i) => s + (mInfra[i.tipo] || 0), 0) / infraItems.length) : null
+    const infraHas = infraItems.filter(i => typeof mInfra[i.tipo] === 'number')
+    const infraAvg = infraHas.length ? Math.round(infraHas.reduce((s, i) => s + mInfra[i.tipo], 0) / infraHas.length) : null
+    const infraTxt = i => mInfra[i.tipo] === false ? 'No tiene' : `${mInfra[i.tipo]}%`
+    // Normaliza el iframe (mismo dominio): 1 solo título + botones consistentes en TODOS los tableros
+    const normalizeIframe = (ev) => {
+      try {
+        const doc = ev.target.contentDocument
+        if (!doc || !doc.head) return
+        let st = doc.getElementById('portal-normalize')
+        if (!st) { st = doc.createElement('style'); st.id = 'portal-normalize'; doc.head.appendChild(st) }
+        st.textContent = "header{display:none!important;}"
+          + ".sat-toggle,.sat-btn{top:14px!important;left:14px!important;bottom:auto!important;right:auto!important;}"
+          + ".zoom-ctrls{bottom:15px!important;right:15px!important;top:auto!important;left:auto!important;}"
+          + ".fit-btn{bottom:15px!important;right:60px!important;top:auto!important;left:auto!important;}"
+          + ".expand-btn{bottom:15px!important;right:150px!important;top:auto!important;left:auto!important;}"
+      } catch (err) { /* iframe no accesible: no-op */ }
+    }
     return (
       <div className="tablero" style={{ display: 'flex', flexDirection: 'column' }}>
         <header className="t-header" style={{ flexShrink: 0 }}>
@@ -292,11 +308,12 @@ export default function Emprendimiento() {
             <div className="t-title-sub">{[emp?.ubicacion, emp?.ciudad, emp?.provincia].filter(Boolean).join(', ')}</div>
           </div>
           {infraAvg != null && (
-            <div className="t-infra-badge" title={infraItems.map(i => `${i.name}: ${mInfra[i.tipo]}%`).join('\n')}>
+            <div className="t-infra-badge" title={infraItems.map(i => `${i.name}: ${infraTxt(i)}`).join('\n')}>
               <span style={{ color: infraAvg === 100 ? '#16a34a' : '#FB7520', fontWeight: 700 }}>{infraAvg}%</span>
               <span style={{ fontSize: 10, opacity: 0.7 }}>Infra</span>
             </div>
           )}
+          <div className="t-updated" style={{ fontSize: 10, opacity: 0.65, marginLeft: 12, whiteSpace: 'nowrap', color: '#8b93ab' }}>Actualizado: {mEntry?.actualizado || '—'}</div>
           <div className="t-spacer" />
           <button className="t-logout" onClick={logout}>Salir</button>
         </header>
@@ -306,12 +323,12 @@ export default function Emprendimiento() {
               <div key={i.tipo} className="t-infra-ribbon-item">
                 <InfraIcon tipo={i.tipo} color={i.color} size={14} />
                 <span className="t-infra-ribbon-name">{i.short}</span>
-                <span className="t-infra-ribbon-pct" style={{ color: mInfra[i.tipo] === 100 ? '#16a34a' : i.color }}>{mInfra[i.tipo]}%</span>
+                <span className="t-infra-ribbon-pct" style={{ color: mInfra[i.tipo] === false ? '#8b93ab' : (mInfra[i.tipo] === 100 ? '#16a34a' : i.color) }}>{infraTxt(i)}</span>
               </div>
             ))}
           </div>
         )}
-        <iframe src={src} style={{ flex: 1, border: 'none', width: '100%', minHeight: 0 }} title={`Tablero ${codigo}`} />
+        <iframe src={src} onLoad={normalizeIframe} style={{ flex: 1, border: 'none', width: '100%', minHeight: 0 }} title={`Tablero ${codigo}`} />
       </div>
     )
   }
