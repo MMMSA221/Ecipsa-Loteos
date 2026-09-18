@@ -281,15 +281,15 @@ export default function Emprendimiento() {
     const src = `${base}tableros/${htmlFile}`
 
     return (
-      <div className="tablero" style={{ position: 'relative', width: '100%', height: '100vh' }}>
-        <Link to="/" title="Volver a emprendimientos" style={{
-          position: 'absolute', top: 10, left: 10, zIndex: 50,
-          background: 'rgba(14,21,37,.85)', color: '#fff', textDecoration: 'none',
-          borderRadius: 8, padding: '6px 14px', fontSize: 13, fontWeight: 600,
-          border: '1px solid rgba(255,255,255,.15)', boxShadow: '0 2px 8px rgba(0,0,0,.3)'
-        }}>← Volver</Link>
-        <iframe src={src} style={{ width: '100%', height: '100%', border: 'none' }} title={`Tablero ${codigo}`} />
-      </div>
+      <>
+        <Link to="/" title="Volver" style={{
+          position: 'fixed', top: 6, left: 6, zIndex: 9999,
+          background: 'rgba(14,21,37,.7)', color: '#ccc', textDecoration: 'none',
+          borderRadius: 6, padding: '3px 10px', fontSize: 11, fontWeight: 500,
+          border: '1px solid rgba(255,255,255,.12)',
+        }}>←</Link>
+        <iframe src={src} style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', border: 'none' }} title={`Tablero ${codigo}`} />
+      </>
     )
   }
 
