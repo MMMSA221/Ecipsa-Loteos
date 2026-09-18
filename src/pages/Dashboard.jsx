@@ -36,7 +36,7 @@ export default function Dashboard() {
     return INFRA_ITEMS.map(i => ({ ...i, pct: m[i.tipo] }))
   }
   function infraAvg(emp) {
-    const vals = infraVals(emp).map(i => i.pct).filter(v => v != null)
+    const vals = infraVals(emp).map(i => i.pct).filter(v => typeof v === 'number')
     if (!vals.length) return null
     return Math.round(vals.reduce((a, b) => a + b, 0) / vals.length)
   }

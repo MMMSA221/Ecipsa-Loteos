@@ -284,20 +284,7 @@ export default function Emprendimiento() {
     const infraHas = infraItems.filter(i => typeof mInfra[i.tipo] === 'number')
     const infraAvg = infraHas.length ? Math.round(infraHas.reduce((s, i) => s + mInfra[i.tipo], 0) / infraHas.length) : null
     const infraTxt = i => mInfra[i.tipo] === false ? 'No tiene' : `${mInfra[i.tipo]}%`
-    // Normaliza el iframe (mismo dominio): 1 solo título + botones consistentes en TODOS los tableros
-    const normalizeIframe = (ev) => {
-      try {
-        const doc = ev.target.contentDocument
-        if (!doc || !doc.head) return
-        let st = doc.getElementById('portal-normalize')
-        if (!st) { st = doc.createElement('style'); st.id = 'portal-normalize'; doc.head.appendChild(st) }
-        st.textContent = "header{display:none!important;}"
-          + ".sat-toggle,.sat-btn{top:14px!important;left:14px!important;bottom:auto!important;right:auto!important;}"
-          + ".zoom-ctrls{bottom:15px!important;right:15px!important;top:auto!important;left:auto!important;}"
-          + ".fit-btn{bottom:15px!important;right:60px!important;top:auto!important;left:auto!important;}"
-          + ".expand-btn{bottom:15px!important;right:150px!important;top:auto!important;left:auto!important;}"
-      } catch (err) { /* iframe no accesible: no-op */ }
-    }
+
     return (
       <div className="tablero" style={{ display: 'flex', flexDirection: 'column' }}>
         <header className="t-header" style={{ flexShrink: 0 }}>
@@ -328,7 +315,7 @@ export default function Emprendimiento() {
             ))}
           </div>
         )}
-        <iframe src={src} onLoad={normalizeIframe} style={{ flex: 1, border: 'none', width: '100%', minHeight: 0 }} title={`Tablero ${codigo}`} />
+        <iframe src={src} style={{ flex: 1, border: 'none', width: '100%', minHeight: 0 }} title={`Tablero ${codigo}`} />
       </div>
     )
   }
