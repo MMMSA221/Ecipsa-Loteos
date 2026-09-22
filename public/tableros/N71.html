@@ -48,7 +48,7 @@
 body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); height:100vh; display:flex; flex-direction:column; overflow:hidden; }
 
 /* ── HEADER ── */
-header { padding:8px 18px; background:var(--surface); border-bottom:1px solid var(--border); display:flex; align-items:center; gap:14px; flex-shrink:0; }
+header { padding:8px 18px 8px 48px; background:var(--surface); border-bottom:1px solid var(--border); display:flex; align-items:center; gap:14px; flex-shrink:0; position:relative; z-index:5; }
 .logo { background:linear-gradient(135deg,#4f8ef7,#9b8fef); color:#fff; font-family:'DM Mono',monospace; font-size:11px; font-weight:500; padding:4px 10px; border-radius:6px; letter-spacing:.05em; flex-shrink:0; }
 .header-titles { display:flex; flex-direction:column; gap:1px; }
 .header-main { font-size:13px; font-weight:600; color:var(--text); line-height:1.2; }
@@ -605,9 +605,14 @@ svg.setAttribute('width', W);
 svg.setAttribute('height', H);
 svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
 
-// Manzana outlines (debajo de los lotes)
+// Manzana outlines (debajo de los lotes) — solo si tienen polígonos reales
 const mzG = document.createElementNS('http://www.w3.org/2000/svg','g');
 DATA.manzanas.forEach(mz => {
+  if (!mz.pts || mz.pts.length < 4) return; // skip label-only entries
+  // Skip tiny placeholder polygons (solo para labels)
+  const xs = mz.pts.map(p=>p[0]), ys = mz.pts.map(p=>p[1]);
+  const w = Math.max(...xs)-Math.min(...xs), h = Math.max(...ys)-Math.min(...ys);
+  if (w < 10 && h < 10) return;
   const poly = document.createElementNS('http://www.w3.org/2000/svg','polygon');
   poly.setAttribute('points', p2s(mz.pts));
   poly.setAttribute('class','mzn-poly');
@@ -639,8 +644,9 @@ svg.appendChild(lotG);
 // Manzana badges (POR ENCIMA de los lotes)
 const mzBadgeG = document.createElementNS('http://www.w3.org/2000/svg','g');
 DATA.manzanas.forEach(mz => {
-  const cxm = mz.pts.reduce((s,p) => s+p[0], 0) / mz.pts.length;
-  const cym = mz.pts.reduce((s,p) => s+p[1], 0) / mz.pts.length;
+  // Usar labelPos del DXF si existe, sino centroide
+  const cxm = mz.labelPos ? mz.labelPos[0] : mz.pts.reduce((s,p) => s+p[0], 0) / mz.pts.length;
+  const cym = mz.labelPos ? mz.labelPos[1] : mz.pts.reduce((s,p) => s+p[1], 0) / mz.pts.length;
   const cx = tx(cxm), cy = ty(cym);
   const text = 'Mza ' + (mz.label || '');
   const bw = 14 + text.length * 8, bh = 22;
