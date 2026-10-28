@@ -137,6 +137,22 @@
         "entregados": 0,
         "no_disponible": 35
       }
+    },
+    {
+      "codigo": "VC",
+      "nombre": "Valle Cercano",
+      "nombre_full": "VC Valle Cercano",
+      "ubicacion": "Córdoba Capital",
+      "ciudad": "Córdoba",
+      "provincia": "Córdoba",
+      "estado_general": "En ejecución",
+      "excel": "10_2026_Stock_Valle.xlsx",
+      "geo": "",
+      "merge_ab": false,
+      "pipeline": "VCC - Terreno 5Ha",
+      "link_sitio": "",
+      "link_pipeline": "",
+      "tablero_html": "VC.html"
     }
   ]
 }
