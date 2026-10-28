@@ -249,9 +249,30 @@ body.map-expanded .expand-btn .close-lbl { display:inline; }
   box-shadow:0 4px 20px rgba(0,0,0,.4);
 }
 .georef-bar.active { display:flex; }
-.georef-bar label { color:var(--text3); font-size:9px; text-transform:uppercase; letter-spacing:.06em; }
-.georef-bar input[type=range] { width:80px; accent-color:var(--accent); }
+.georef-bar label { color:var(--text3); font-size:9px; text-transform:uppercase; letter-spacing:.06em; display:block; margin-bottom:3px; }
+.georef-bar label .gr-unit { color:var(--text3); font-size:8px; text-transform:none; letter-spacing:0; font-weight:400; opacity:.7; }
+.georef-bar input[type=range] { width:90px; accent-color:var(--accent); }
 .georef-bar .gr-val { font-family:'DM Mono',monospace; font-size:10px; min-width:38px; text-align:right; }
+.gr-field { display:flex; flex-direction:column; gap:2px; }
+.gr-row   { display:flex; align-items:center; gap:4px; }
+.gr-num {
+  width:52px; padding:3px 5px; background:var(--surface2); border:1px solid var(--border);
+  color:var(--text); border-radius:4px; font-family:'DM Mono',monospace; font-size:11px;
+  text-align:right; outline:none; -moz-appearance:textfield;
+}
+.gr-num:focus { border-color:var(--accent); background:var(--surface3); }
+.gr-num::-webkit-outer-spin-button, .gr-num::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+.gr-zero {
+  width:22px; height:22px; padding:0; background:transparent; border:1px solid var(--border);
+  color:var(--text2); border-radius:4px; cursor:pointer; font-size:11px;
+  display:flex; align-items:center; justify-content:center; transition:all .12s;
+}
+.gr-zero:hover { border-color:var(--accent); color:var(--accent); background:rgba(90,156,248,.08); }
+.georef-btn.reset-all {
+  background:transparent; border:1px solid var(--border); color:var(--text2);
+  font-size:10px; padding:5px 10px;
+}
+.georef-btn.reset-all:hover { border-color:#f5a623; color:#f5a623; }
 .georef-btn {
   padding:5px 14px; border-radius:6px; font-size:11px; font-weight:600;
   cursor:pointer; font-family:'DM Sans',sans-serif; border:none; transition:all .15s;
@@ -406,30 +427,43 @@ body.sat-on #georef-edit-btn { display:block; }
   <!-- Editor de georeferencia (visible solo en satélite) -->
   <button id="georef-edit-btn" class="georef-btn edit">📐 Editar posición</button>
   <div id="georef-bar" class="georef-bar">
-    <div style="display:flex;flex-direction:column;gap:2px">
-      <label>Desplaz. X</label>
-      <input type="range" id="gr-dx" min="-500" max="500" value="0" step="1">
-      <span class="gr-val" id="gr-dx-v">0</span>
+    <div class="gr-field">
+      <label>Desplaz. X <span class="gr-unit">(m este+)</span></label>
+      <div class="gr-row">
+        <input type="range" id="gr-dx" min="-300" max="300" value="0" step="1">
+        <input type="number" id="gr-dx-n" value="0" step="1" class="gr-num" title="Editable con teclado · ↑↓ paso 1 · Shift+↑↓ paso 10">
+        <button class="gr-zero" data-k="dx" title="Volver a 0">⟲</button>
+      </div>
     </div>
-    <div style="display:flex;flex-direction:column;gap:2px">
-      <label>Desplaz. Y</label>
-      <input type="range" id="gr-dy" min="-500" max="500" value="0" step="1">
-      <span class="gr-val" id="gr-dy-v">0</span>
+    <div class="gr-field">
+      <label>Desplaz. Y <span class="gr-unit">(m sur+)</span></label>
+      <div class="gr-row">
+        <input type="range" id="gr-dy" min="-300" max="300" value="0" step="1">
+        <input type="number" id="gr-dy-n" value="0" step="1" class="gr-num" title="Editable con teclado · ↑↓ paso 1 · Shift+↑↓ paso 10">
+        <button class="gr-zero" data-k="dy" title="Volver a 0">⟲</button>
+      </div>
     </div>
-    <div style="display:flex;flex-direction:column;gap:2px">
+    <div class="gr-field">
       <label>Escala</label>
-      <input type="range" id="gr-sc" min="0.80" max="1.20" value="1.00" step="0.001">
-      <span class="gr-val" id="gr-sc-v">1.000</span>
+      <div class="gr-row">
+        <input type="range" id="gr-sc" min="0.5" max="2.0" value="1" step="0.005">
+        <input type="number" id="gr-sc-n" value="1" step="0.005" min="0.1" max="10" class="gr-num" title="Editable con teclado · ↑↓ paso 0.005">
+        <button class="gr-zero" data-k="sc" title="Volver a 1 (sin escala)">⟲</button>
+      </div>
     </div>
-    <div style="display:flex;flex-direction:column;gap:2px">
-      <label>Rotación °</label>
-      <input type="range" id="gr-rot" min="-10" max="10" value="0" step="0.05">
-      <span class="gr-val" id="gr-rot-v">0.00</span>
+    <div class="gr-field">
+      <label>Rotación <span class="gr-unit">(°)</span></label>
+      <div class="gr-row">
+        <input type="range" id="gr-rot" min="-45" max="45" value="0" step="0.1">
+        <input type="number" id="gr-rot-n" value="0" step="0.1" min="-180" max="180" class="gr-num" title="Editable con teclado · ↑↓ paso 0.1 · Shift+↑↓ paso 1">
+        <button class="gr-zero" data-k="rot" title="Volver a 0°">⟲</button>
+      </div>
     </div>
     <div class="georef-pivot-info">
       <label>Pivote</label>
       <span class="gr-val" id="gr-pivot-v" style="font-size:8px">centro</span>
     </div>
+    <button class="georef-btn reset-all" id="gr-reset-all" title="Volver todo a los valores iniciales">↺ Todo</button>
     <button class="georef-btn save" id="gr-save">✓ Grabar</button>
     <button class="georef-btn cancel" id="gr-cancel">✕ Cancelar</button>
   </div>
@@ -614,10 +648,15 @@ function getGeorefCoeffs() {
   const pLatNew = a0*px + a1*py + _lat_base[2];
   const pLonNew = b0*px + b1*py + _lon_base[2];
 
-  // Corrección: el pivote debe quedar fijo, la diferencia se suma al término independiente
-  // Más el offset manual del usuario
-  const latOff = (pLatOrig - pLatNew) + grAdj.dy * Math.abs(_lat_base[1]) * 0.0001;
-  const lonOff = (pLonOrig - pLonNew) + grAdj.dx * Math.abs(_lon_base[0]) * 0.0001;
+  // Corrección: el pivote debe quedar fijo, la diferencia se suma al término independiente.
+  // Más el offset manual del usuario, interpretado en METROS reales:
+  //   • dx positivo = mueve el plano al ESTE (más lon)
+  //   • dy positivo = mueve el plano al SUR  (menos lat)
+  // Conversión metros → puntos del plano: 1 pt ≈ 1.41 m → 1 m ≈ 0.709 pt.
+  // Luego puntos × coeficiente de escala del plano = grados.
+  const PT_PER_M = 1 / 1.41;
+  const latOff = (pLatOrig - pLatNew) + grAdj.dy * PT_PER_M * _lat_base[1];
+  const lonOff = (pLonOrig - pLonNew) + grAdj.dx * PT_PER_M * _lon_base[0];
 
   return {
     lat: [a0, a1, _lat_base[2] + latOff],
@@ -1234,12 +1273,24 @@ function startGeorefEdit() {
   }
 }
 
+// Valores por defecto (nunca cambian: son los que usa "↺ Todo")
+const GR_DEFAULTS = { dx:0, dy:0, sc:1, rot:0 };
+
 function updateGeorefDisplays() {
-  document.getElementById('gr-dx-v').textContent = grAdj.dx.toFixed(0);
-  document.getElementById('gr-dy-v').textContent = grAdj.dy.toFixed(0);
-  document.getElementById('gr-sc-v').textContent = grAdj.sc.toFixed(3);
-  document.getElementById('gr-rot-v').textContent = grAdj.rot.toFixed(2);
-  // Mostrar posición del pivote
+  // Mantener en sync los inputs numéricos con grAdj (sin disparar sus eventos)
+  const sync = (id, v) => {
+    const el = document.getElementById(id);
+    if (el && document.activeElement !== el) el.value = v;
+  };
+  sync('gr-dx',    grAdj.dx.toFixed(0));
+  sync('gr-dx-n',  grAdj.dx.toFixed(0));
+  sync('gr-dy',    grAdj.dy.toFixed(0));
+  sync('gr-dy-n',  grAdj.dy.toFixed(0));
+  sync('gr-sc',    grAdj.sc.toFixed(3));
+  sync('gr-sc-n',  grAdj.sc.toFixed(3));
+  sync('gr-rot',   grAdj.rot.toFixed(2));
+  sync('gr-rot-n', grAdj.rot.toFixed(2));
+  // Pivote
   const pivInfo = document.getElementById('gr-pivot-v');
   if (pivInfo) {
     const [plat, plon] = svgToLL(grAdj.pivotX, grAdj.pivotY);
@@ -1247,19 +1298,55 @@ function updateGeorefDisplays() {
   }
 }
 
-// Listeners en sliders para preview en vivo
+// Aplica un valor a grAdj y refresca mapa + marcador del pivote
+function applyGrChange(key, value) {
+  if (isNaN(value)) return;
+  grAdj[key] = value;
+  updateGeorefDisplays();
+  drawSatFeatures();
+  syncSatFilters();
+  if (pivotMarker) {
+    const [plat, plon] = svgToLL(grAdj.pivotX, grAdj.pivotY);
+    pivotMarker.setLatLng([plat, plon]);
+  }
+}
+
+// Listeners bidireccionales: slider ↔ input numérico
 Object.entries(grSliders).forEach(([key, id]) => {
-  document.getElementById(id).addEventListener('input', () => {
-    grAdj[key] = parseFloat(document.getElementById(id).value);
-    updateGeorefDisplays();
-    drawSatFeatures();
-    syncSatFilters();
-    // Actualizar posición del pivote en el mapa
-    if (pivotMarker) {
-      const [plat, plon] = svgToLL(grAdj.pivotX, grAdj.pivotY);
-      pivotMarker.setLatLng([plat, plon]);
-    }
+  const slider = document.getElementById(id);
+  const num    = document.getElementById(id + '-n');
+  // Slider → grAdj (el input numérico se actualiza por updateGeorefDisplays)
+  slider.addEventListener('input', () => applyGrChange(key, parseFloat(slider.value)));
+  // Input numérico → grAdj (acepta valores fuera del rango del slider)
+  if (num) {
+    const commit = () => applyGrChange(key, parseFloat(num.value));
+    num.addEventListener('input', commit);
+    num.addEventListener('change', commit);
+    // Enter dentro del input = quita foco (confirma el valor y re-sincroniza)
+    num.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); num.blur(); }
+    });
+  }
+});
+
+// Botones "⟲" por campo: vuelven ese parámetro a su default
+document.querySelectorAll('.gr-zero').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const k = btn.dataset.k;
+    applyGrChange(k, GR_DEFAULTS[k]);
   });
+});
+
+// "↺ Todo": todos los parámetros a sus defaults (dx=0, dy=0, sc=1, rot=0)
+document.getElementById('gr-reset-all').addEventListener('click', () => {
+  Object.entries(GR_DEFAULTS).forEach(([k, v]) => { grAdj[k] = v; });
+  updateGeorefDisplays();
+  drawSatFeatures();
+  syncSatFilters();
+  if (pivotMarker) {
+    const [plat, plon] = svgToLL(grAdj.pivotX, grAdj.pivotY);
+    pivotMarker.setLatLng([plat, plon]);
+  }
 });
 
 function removePivotMarker() {
